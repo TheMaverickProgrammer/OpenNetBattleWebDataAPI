@@ -6,23 +6,9 @@ Description:
   The main script acts as a RESTful API
   server. Handles HTTP requests. Uses
   Passport for user registration and
-  authentication and Auth2orization
-  for Oauth2 support. This script is
+  authentication. This script is
   a Web API on top of the Open NetBattle Web API.
 ********************************************/
-
-/*******************************************
-SERVER STATES
-*******************************************/
-var state = {
-  dbStatusValues: {
-    OK: "OK",
-    BAD: "BAD"
-  },
-  dbStatus: "OK",
-  dbQueryIndex: 0,
-  dbQueryCount: 0
-};
 
 /*******************************************
 LOAD REQUIRED PACKAGES
@@ -92,7 +78,7 @@ var mongooseConnection = mongoose.createConnection();
 // Connect to mongo
 var url = settings.url,
     port = settings.port,
-    table = settings.collection,
+    collection = settings.collection,
     user = settings.user,
     pass = settings.password;
 
@@ -158,25 +144,8 @@ CONFIG SERVER
 var port = process.env.PORT || 3000;
 
 var cleanup = function() {
-
-  setTimeout(function() {
-       console.error("Could not close connections in 10 seconds, forcefully shutting down");
-       process.exit()
-  }, 10*1000);
-
-  var checkDBQueries = function() {
-    // Check if db is in the middle of a query
-    if(state.dbStatus.dbQueryIndex == state.dbStatus.dbQueryCount) {
-      // We're safe to close
-      db.close();
-      process.exit();
-    }
-  }
-
-  setInterval(function() {
-       console.error("Checking db query status every 1 scond");
-       checkDBQueries();
-  }, 1000);
+    db.close();
+    process.exit();
 };
 
 process.on('SIGINT', cleanup);

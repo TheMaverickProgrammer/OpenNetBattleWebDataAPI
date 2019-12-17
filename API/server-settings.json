@@ -1,6 +1,6 @@
 {
   "dbType": "mongo",
-  "url": "localhost:3000",
+  "url": "localhost",
   "user": "mongoAdmin",
   "password": "sign into mongo database",
   "port": "27017",
