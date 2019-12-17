@@ -6,9 +6,9 @@ var FoldersModel = require('./models/FoldersModel');
 var FoldersController = {};
 
 // POST API_IP/VERSION/Folders/
-// Create a NEW Folders
-// AddFolders
-FoldersController.AddFolders = function(req, res) {
+// Create a NEW Folder
+// AddFolder
+FoldersController.AddFolder = function(req, res) {
   var db = req.database;
 
   // Users can only create Folders for their own account
@@ -56,7 +56,7 @@ FoldersController.GetFoldersList = function(req, res) {
 // GET API_IP/VERSION/Folders/:id
 // Get a single Folders
 // GetFoldersByID
-FoldersController.GetFoldersByID = function(req, res) {
+FoldersController.GetFolderByID = function(req, res) {
   var query = FoldersModel.findOne({_id: req.params.id});
 
   var promise = query.exec();
@@ -69,9 +69,9 @@ FoldersController.GetFoldersByID = function(req, res) {
 }
 
 // PUT API_IP/VERSION/Folders/:id
-// Update an Folders
-// UpdateFolders
-FoldersController.UpdateFolders = function(req, res) {
+// Update a Folder
+// UpdateFolder
+FoldersController.UpdateFolder = function(req, res) {
   var query = FoldersModel.findOne({_id: req.params.id});
 
   var promise = query.exec();
@@ -98,9 +98,9 @@ FoldersController.UpdateFolders = function(req, res) {
 }
 
 // DELETE API_IP/VERSION/Folders/:id
-// Delete an Folders permanently
-// DeleteFolders
-FoldersController.DeleteFolders = function(req, res) {
+// Delete a Folder permanently
+// DeleteFolder
+FoldersController.DeleteFolder = function(req, res) {
   var query = BlogPostModel.findOne({_id: req.params.id});
 
   var promise = query.exec();

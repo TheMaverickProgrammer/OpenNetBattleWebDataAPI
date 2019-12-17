@@ -1,6 +1,6 @@
 /*
 Author: Maverick Peppers
-Date: 12/16/20179
+Date: 12/16/2019
 Description: Router to map resources to controllers via URL endpoints
 */
 
@@ -44,21 +44,21 @@ module.exports = function Router(database) {
   var chips = require('./controllers/Chips');
 
   // FOLDERS RESOURCE
-  var folders = require('./controllers/Folders')
+  var folders = require('./controllers/Folders');
 
   // PUBLIC FOLDERS RESOURCE
-  var publicFolders = require('./controllers/PublicFolders')
+  var publicFolders = require('./controllers/PublicFolders');
 
   /** RESOURCES */
 
   // Use this endpoint to create admins remotely
   router.route('/admin')
-    .post(auth.isAuthenticated, adminUsers.AddAdminUser)
+    .post(auth.isAuthenticated, adminUsers.AddAdminUser);
 
   // Use the users module as an endpoint
   router.route('/users')
     .get(auth.isAuthenticated, users.GetUsersList)
-    .post(auth.isAuthenticated, users.AddUser)
+    .post(auth.isAuthenticated, users.AddUser);
 
   router.route('/users/:id')
     .get(auth.isAuthenticated, users.GetUserByID)
@@ -73,7 +73,7 @@ module.exports = function Router(database) {
   router.route('/chips/:id')
     .get(auth.isAuthenticated, chips.GetChipByID)
     .put(auth.isAuthenticated, chips.UpdateChip)
-    .delete(auth.isAuthenticated, coupons.DeleteChip);
+    .delete(auth.isAuthenticated, chips.DeleteChip);
 
   // Use the folders module as an endpoint
   router.route('/folders')
@@ -87,12 +87,11 @@ module.exports = function Router(database) {
 
   // Use the events module as an endpoint
   router.route('/public-folders')
-    .get(auth.isAuthenticated, publicFolders.GetPublicFolderList)
+    .get(auth.isAuthenticated, publicFolders.GetPublicFoldersList)
     .post(auth.isAuthenticated, publicFolders.AddPublicFolder);
 
   router.route('/public-folders/:id')
     .get(auth.isAuthenticated, publicFolders.GetPublicFolderByID)
-    .put(auth.isAuthenticated, publicFolders.UpdatePublicFolder)
     .delete(auth.isAuthenticated, publicFolders.DeletePublicFolder);
 
   return router;

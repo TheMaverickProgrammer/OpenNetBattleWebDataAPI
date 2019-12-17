@@ -91,13 +91,10 @@ var db = mongoose.connection;
 db.on('error', function(err) {
   // Print the error let the system know it's not good
   console.log(err.stack);
-
-  state.dbStatus = state.dbStatusValues.BAD;
 });
 
 db.once('open', function() {
   console.log("Connected to database on " + connectString);
-  state.dbStatus = state.dbStatusValues.OK;
 });
 
 // Use the Passport middleware in our routes

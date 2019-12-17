@@ -6,21 +6,21 @@ var ChipsModelModel = require('./models/ChipsModelModel');
 
 var ChipsController = {};
 
-function makeChips(db,id, codes) {
+function makeChips(db,id,codes) {
   codes.forEach((c) => {
     var Chip = {
-      modelId = id,
-      code = c
+      modelId: id,
+      code: c
     };
 
     var model = ChipsModel(Chip);
     var promise = model.save();
     
     promise.then(function(Chip) {
-      // Do nothing
-    }, function(err) {
-      res.status(500).json({error: err});
-    });
+		  // Do nothing
+		}, function(err) {
+		  res.status(500).json({error: err});
+		});
   });
 }
 

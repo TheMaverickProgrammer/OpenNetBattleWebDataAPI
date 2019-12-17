@@ -6,9 +6,9 @@ var PublicFoldersModel = require('./models/PublicFoldersModel');
 var PublicFoldersController = {};
 
 // POST API_IP/VERSION/PublicFolders/
-// Create a NEW PublicFolders
-// AddPublicFolders
-PublicFoldersController.AddPublicFolders = function(req, res) {
+// Create a NEW PublicFolder
+// AddPublicFolder
+PublicFoldersController.AddPublicFolder = function(req, res) {
   var db = req.database;
 
   var PublicFolders = {
@@ -48,9 +48,9 @@ PublicFoldersController.GetPublicFoldersList = function(req, res) {
 }
 
 // GET API_IP/VERSION/PublicFolders/:id
-// Get a single PublicFolders
-// GetPublicFoldersByID
-PublicFoldersController.GetPublicFoldersByID = function(req, res) {
+// Get a single PublicFolder
+// GetPublicFolderByID
+PublicFoldersController.GetPublicFolderByID = function(req, res) {
   var query = PublicFoldersModel.findOne({_id: req.params.id});
 
   var promise = query.exec();
@@ -63,9 +63,9 @@ PublicFoldersController.GetPublicFoldersByID = function(req, res) {
 }
 
 // DELETE API_IP/VERSION/PublicFolders/:id
-// Delete an PublicFolders permanently
-// DeletePublicFolders
-PublicFoldersController.DeletePublicFolders = function(req, res) {
+// Delete a PublicFolder permanently
+// DeletePublicFolder
+PublicFoldersController.DeletePublicFolder = function(req, res) {
   var query = BlogPostModel.findOne({_id: req.params.id});
 
   var promise = query.exec();

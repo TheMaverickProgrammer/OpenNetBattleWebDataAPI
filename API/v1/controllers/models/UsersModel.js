@@ -14,19 +14,19 @@ var Users = Schema({
 // Execute before each businessUser.save() call
 var bcrypt = require('bcrypt-nodejs');
 
-BusinessUsers.pre('save', function(callback) {
-  var businessUser = this;
+Users.pre('save', function(callback) {
+  var user = this;
 
   // Break if the pass hasn't been modified
-  if(!businessUser.isModified('password')) return callback();
+  if(!user.isModified('password')) return callback();
 
   // Password changed so we need to hash it before storing on database
   bcrypt.genSalt(5, function(err, salt) {
     if(err) return callback(err);
 
-    bcrypt.hash(businessUser.password, salt, null, function(err, hash) {
+    bcrypt.hash(user.password, salt, null, function(err, hash) {
       if(err) return callback(err);
-      businessUser.password = hash;
+      user.password = hash;
       callback();
     });
   });
