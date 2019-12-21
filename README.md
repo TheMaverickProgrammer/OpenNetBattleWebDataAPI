@@ -8,9 +8,9 @@ and share optimal folders with eachother.
 A mongo DB server for the data store
 
 # install
-Clone this project 
-Enter the directory via console
-Enter `npm install`
+- Clone this project 
+- Enter the directory via console
+- Enter `npm install`
 
 # running
 `npm start`
