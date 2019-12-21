@@ -128,9 +128,6 @@ app.use(function(req, res, next) {
 app.use(function(req, res, next) {
   req.database = db;
 
-  // Pass the databaseStatus object to control the query count.
-  req.databaseStatus = state.dbStatus;
-
   next(); // Move onto the next middleware
 });
 
@@ -175,10 +172,12 @@ if(app.get('env') == 'development') {
   app.use(function(err, req, res, next) {
     res.status(err.status || 500);
 
-    res.render('error', {
+/*    res.render('error', {
       message: err.message,
       error: err
     });
+	*/
+	res.json({message: err.message, error:err});
   });
 }
 
@@ -186,6 +185,7 @@ if(app.get('env') == 'development') {
 // leaked to user
 app.use(function(err, req, res, next) {
   res.status(err.status || 500);
+  res.send();
 });
 
 /*****************************************

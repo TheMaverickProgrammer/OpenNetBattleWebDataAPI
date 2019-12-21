@@ -7,9 +7,9 @@ module.exports = function Auth(database) {
   var BasicStrategy = require('passport-http').BasicStrategy;
   var bcrypt = require('bcryptjs');
 
-  var users = require('./controllers/models/UsersModel');
+  var UsersModel = require('./controllers/models/UsersModel');
 
-  // Used when business user is not found
+  // Used when regular user is not found
   var verifyAdminPassword = function(username, password, cb) {
     var db = database;
 
@@ -26,8 +26,8 @@ module.exports = function Auth(database) {
             // Check password using bcrypt
             bcrypt.compare(password, adminUser.password, function(err, isMatch) {
               if(err) { console.log("err: " + JSON.stringify(err)); return cb(err); }
-              console.log("user logged in status: " + JSON.stringify(isMatch));
-              isMatch.isAdmin = true;
+			  isMatch = {isAdmin: true};
+              //console.log("user logged in status: " + JSON.stringify(isMatch));
               cb(null, isMatch);
             });
           }
@@ -35,20 +35,21 @@ module.exports = function Auth(database) {
     });
   };
 
-  var verifyUserPassword = function(email, password, cb) {
-    UsersModel.findOne({email: email},
+  var verifyUserPassword = function(username, password, cb) {
+    UsersModel.findOne({username: username},
      function(err, user) {
         if(err) {
           cb(err);
         } else {
           if(!user) {
             // Check if this is an admin login
-            verifyAdminPassword(email, password, cb);
+            verifyAdminPassword(username, password, cb);
           } else {
             // Check password using bcrypt
-            bcrypt.compare(password, businessUser.password, function(err, isMatch) {
+            bcrypt.compare(password, user.password, function(err, isMatch) {
               if(err) { console.log("err: " + JSON.stringify(err)); return cb(err); }
-              console.log("user logged in status: " + JSON.stringify(isMatch));
+			  isMatch = { isAdmin: false, user };
+              //console.log("user logged in status: " + JSON.stringify(isMatch));
               cb(null, isMatch);
             });
           }
@@ -57,15 +58,11 @@ module.exports = function Auth(database) {
   };
 
   passport.serializeUser(function(user, done) {
-    console.log("serializing user");
-
-    done(null, user.email);
+    done(null, user.username);
   });
 
-  passport.deserializeUser(function(email, done) {
-    console.log("deserializing user");
-
-    var query = UsersModel.findOne({email: email});
+  passport.deserializeUser(function(username, done) {
+    var query = UsersModel.findOne({username: username});
     var promise = query.exec();
 
     promise.then(function(user) {
@@ -77,18 +74,59 @@ module.exports = function Auth(database) {
 
   // Basic strategy for users
   passport.use('basic', new BasicStrategy(
-    function(email, password, done) {
-      verifyUserPassword(email, password,
+    function(username, password, done) {
+      verifyUserPassword(username, password,
         function(err, isMatch) {
           if(err) { return done(err); }
 
           // Password did not match
           if(!isMatch) { return done(null, false); }
-
+ 
+          var isAdmin = isMatch.isAdmin || false;
+		  var username = "";
+		  var userId = null;
+		  
+	      if(typeof isMatch.user == "undefined" && isAdmin) {
+		      username = "admin";
+		  } else if(isMatch.user) {
+		      username = isMatch.user.username;
+			  userId = isMatch.user._id;
+		  }
+		  
           // Success
           var userInfo = {
-            email: email,
-            isAdmin: isMatch.isAdmin || false,
+            username: username,
+			userId: userId,
+            isAdmin: isAdmin
+          };
+
+          return done(null, userInfo);
+        });
+      })
+  );
+  
+  // Basic strategy for admins
+  passport.use('admin', new BasicStrategy(
+    function(username, password, done) {
+      verifyAdminPassword(username, password,
+        function(err, isMatch) {
+          if(err) { return done(err); }
+
+          // Password did not match
+          if(!isMatch) { return done(null, false); }
+ 
+          var isAdmin = isMatch.isAdmin || false;
+		  
+		  // We must be admin otherwise something went seriously wrong
+		  if(!isAdmin) { return done(null, false); }
+		  
+		  var username = "admin";
+		  
+          // Success
+          var userInfo = {
+            username: username,
+			userId: null,
+            isAdmin: isAdmin
           };
 
           return done(null, userInfo);
@@ -97,8 +135,8 @@ module.exports = function Auth(database) {
   );
 
   // Export the function to authenticate resource requests
-  // DO NOT store this in a session cookie -- force authentication every request
-  isAuthenticated = passport.authenticate('basic', { session: false });
-
+  // store this in a session cookie
+  isAuthenticated = passport.authenticate('basic', { session: true });
+  isAdminAuthenticated = passport.authenticate('admin', { session: false });
   return this;
 };

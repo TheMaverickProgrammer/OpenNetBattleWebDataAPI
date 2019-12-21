@@ -9,4 +9,4 @@ var PublicFolders = Schema({
 });
 
 // Export function to create Public Folders model class
-module.exports = mongoose.model('PublicFolders', PublicFolders);
+module.exports = mongoose.model('publicFolders', PublicFolders);

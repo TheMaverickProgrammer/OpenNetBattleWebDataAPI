@@ -15,7 +15,7 @@ FoldersController.AddFolder = function(req, res) {
   var userId = req.user.userId;
 
   var Folders = {
-    uderId: userId,
+    userId: userId,
     name: req.body.name,
     chips: req.body.chips || []
   };
@@ -30,7 +30,7 @@ FoldersController.AddFolder = function(req, res) {
   var promise = model.save();
 
   promise.then(function(Folders) {
-    res.json(Folders);
+    res.json({data: Folders});
   }, function(err) {
     res.status(500).json({error: err});
   });
@@ -39,15 +39,13 @@ FoldersController.AddFolder = function(req, res) {
 // GET API_IP/VERSION/Folders/
 // Get ALL Folders
 // GetFoldersList
-FoldersController.GetFoldersList = function(req, res) {
-  userId = req.body.userId;
-  
+FoldersController.GetFoldersList = function(req, res) {  
   var query = FoldersModel.find({userId: req.user.userId});
 
   var promise = query.exec();
 
   promise.then(function(Folders) {
-    res.json({Folders});
+    res.json({data: Folders});
   }, function(err) {
     res.status(500).json({error: err});
   });
@@ -57,12 +55,14 @@ FoldersController.GetFoldersList = function(req, res) {
 // Get a single Folders
 // GetFoldersByID
 FoldersController.GetFolderByID = function(req, res) {
-  var query = FoldersModel.findOne({_id: req.params.id});
+  folderId = req.params.id;
+
+  var query = FoldersModel.findOne({userId: req.user.userId, _id: folderId});
 
   var promise = query.exec();
 
   promise.then(function(Folders) {
-    res.json(Folders);
+    res.json({data: Folders});
   }, function(err) {
     res.status(500).json({error: err});
   });
@@ -72,13 +72,13 @@ FoldersController.GetFolderByID = function(req, res) {
 // Update a Folder
 // UpdateFolder
 FoldersController.UpdateFolder = function(req, res) {
-  var query = FoldersModel.findOne({_id: req.params.id});
+  var query = FoldersModel.findOne({userId: req.user.userId, _id: req.params.id});
 
   var promise = query.exec();
 
   promise.then(function(Folders) {
     if(Folders == null) {
-      res.send({status: "BAD", message: "No Folders to update"});
+      res.status(500).json({error: "No Folder with that ID to update"});
       return;
     }
 
@@ -88,12 +88,12 @@ FoldersController.UpdateFolder = function(req, res) {
     var promiseSave = Folders.save();
 
     promiseSave.then(function(Folders){
-      res.json(Folders);
+      res.json({data: Folders});
     },function(err){
-      res.send(err);
+      res.status(500).json({err});
     });
   }, function(err) {
-      res.send(err);
+      res.status(500).json({err});
   });
 }
 
@@ -101,20 +101,21 @@ FoldersController.UpdateFolder = function(req, res) {
 // Delete a Folder permanently
 // DeleteFolder
 FoldersController.DeleteFolder = function(req, res) {
-  var query = BlogPostModel.findOne({_id: req.params.id});
+  var query = FoldersModel.findOne({userId: req.user.userId, _id: req.params.id});
 
   var promise = query.exec();
 
   promise.then(function(Folders) {
+    var name = Folders.name;
     var promiseRemove = Folders.remove();
 
     promiseRemove.then(function(){
-      res.json({status: "OK", message: "Folders removed"});
+      res.status(200).json({data: {message: "Folder " + name + " removed"}});
     },function(err){
-      res.send(err);
+      res.status(500).json({error: err});
     });
   }, function(err) {
-      res.send(err);
+      res.status(500).json({error: err});
   });
 }
 

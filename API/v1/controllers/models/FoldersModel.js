@@ -10,4 +10,4 @@ var Folders = Schema({
 });
 
 // Export function to create Folders model class
-module.exports = mongoose.model('Folders', Folders);
+module.exports = mongoose.model('folders', Folders);

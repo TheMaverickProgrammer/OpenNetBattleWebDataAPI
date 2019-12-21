@@ -8,4 +8,4 @@ var Chips = Schema({
 });
 
 // Export function to create Chips model class
-module.exports = mongoose.model('Chips', Chips);
+module.exports = mongoose.model('chips', Chips);

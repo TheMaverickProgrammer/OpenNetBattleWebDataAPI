@@ -53,19 +53,19 @@ module.exports = function Router(database) {
 
   // Use this endpoint to create admins remotely
   router.route('/admin')
-    .post(auth.isAuthenticated, adminUsers.AddAdminUser);
+    .post(adminUsers.AddAdminUser);
 
   // Use the users module as an endpoint
   router.route('/users')
-    .get(auth.isAuthenticated, users.GetUsersList)
-    .post(auth.isAuthenticated, users.AddUser);
+    .get(auth.isAdminAuthenticated, users.GetUsersList)
+    .post(auth.isAdminAuthenticated, users.AddUser);
 
   router.route('/users/:id')
-    .get(auth.isAuthenticated, users.GetUserByID)
-    .put(auth.isAuthenticated, users.UpdateUser)
-    .delete(auth.isAuthenticated, users.DeleteUser);
+    .get(auth.isAdminAuthenticated, users.GetUserByID)
+    .put(auth.isAdminAuthenticated, users.UpdateUser)
+    .delete(auth.isAdminAuthenticated, users.DeleteUser);
 
-  // Use the coupons module as an endpoint
+  // Use the chips module as an endpoint
   router.route('/chips')
     .get(auth.isAuthenticated, chips.GetChipsList)
     .post(auth.isAuthenticated, chips.AddChip);
@@ -92,7 +92,7 @@ module.exports = function Router(database) {
 
   router.route('/public-folders/:id')
     .get(auth.isAuthenticated, publicFolders.GetPublicFolderByID)
-    .delete(auth.isAuthenticated, publicFolders.DeletePublicFolder);
+    .delete(auth.isAdminAuthenticated, publicFolders.DeletePublicFolder);
 
   return router;
 };

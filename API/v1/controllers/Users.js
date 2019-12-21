@@ -11,17 +11,13 @@ var UsersController = {};
 UsersController.AddUser = function(req, res) {
   var db = req.database;
 
-  console.log("UsersController: " + JSON.stringify(req.body))
-
   var user = {
     username: req.body.username,
-    twitter: req.body.twitter,
+    twitter: req.body.twitter || "",
     password: req.body.password,
     email: req.body.email,
     created: Date.now()
   };
-
-  console.log("new user: " + JSON.stringify(user))
 
   // Force public name to fit 60 char limit
   if(typeof user.username !== 'undefined')
@@ -32,7 +28,7 @@ UsersController.AddUser = function(req, res) {
   var promise = model.save();
 
   promise.then(function(user) {
-    res.json(user);
+    res.json({data: user});
   }, function(err) {
     res.status(500).json({error: err});
   });
@@ -46,7 +42,7 @@ UsersController.GetUsersList = function(req, res) {
     if(err) {
       res.status(500).json({error: err});
     } else {
-      res.json(Users);
+      res.json({data: Users});
     }
   });
 }
@@ -60,7 +56,7 @@ UsersController.GetUserByID = function(req, res) {
   var promise = query.exec();
 
   promise.then(function(user) {
-    res.json(user);
+    res.json({data: user});
   }, function(err) {
     res.status(500).json({error: err});
   });
@@ -70,7 +66,7 @@ UsersController.GetUserByID = function(req, res) {
 // Update a User
 // UpdateUser
 UsersController.UpdateUser = function(req, res) {
-  UsersModel.findById(req.params.id).then((user) => {
+  UsersModel.findById({_id: req.params.id}).then((user) => {
       user.username = req.body.publicName || user.username;
       user.twitter  = req.body.twitterUrl || user.twitter;
       user.password = req.body.password || user.password;
@@ -80,11 +76,10 @@ UsersController.UpdateUser = function(req, res) {
       return user.save();
   }).then((updatedModel) => {
       res.json({
-          msg: 'model updated',
-          updatedModel
+          data: updatedModel
       });
   }).catch((err) => {
-      res.status(500).send(err);
+      res.status(500).json({error: err});
   });
 }
 
@@ -96,16 +91,17 @@ UsersController.DeleteUser = function(req, res) {
 
   var promise = query.exec();
 
-  promise.then(function(businessUser) {
+  promise.then(function(user) {
+    var name = user.username;
     var promiseRemove = post.remove();
 
     promiseRemove.then(function(){
-      res.json({status: "OK", message: "User removed"});
+      res.status(200).json({data: {message: "User " + name + " removed"}});
     },function(err){
-      res.send(err);
+      res.status(500).json({error: err});
     });
   }, function(err) {
-      res.send(err);
+      res.status(500).json({error: err});
   });
 }
 

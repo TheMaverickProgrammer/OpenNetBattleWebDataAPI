@@ -2,8 +2,7 @@ var mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 var Schema = mongoose.Schema;
 
-var ChipsModel = Schema({
-  businessID: {type: Schema.Types.ObjectId, required: true},
+var ChipsModelModel = Schema({
   name: {type: String, required: true},
   damage: {type: Number, required: true},
   element: {type: String, required: true},
@@ -17,4 +16,4 @@ var ChipsModel = Schema({
 });
 
 // Export function to create ChipsModel model class
-module.exports = mongoose.model('ChipsModel', ChipsModel);
+module.exports = mongoose.model('chipsModel', ChipsModelModel);

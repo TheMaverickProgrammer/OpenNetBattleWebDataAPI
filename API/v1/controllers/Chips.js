@@ -57,7 +57,7 @@ ChipsController.AddChip = function(req, res) {
   var promise = model.save();
 
   promise.then(function(ChipModel) {
-    res.json(ChipModel);
+    res.json({data: ChipModel});
 
     makeChips(db, ChipModel._id, ChipModel.codes);
 
@@ -75,7 +75,7 @@ ChipsController.GetChipsList = function(req, res) {
       res.status(500).json({error: err});
       return;
     } else {
-      res.json(Chips);
+      res.json({data: Chips});
     }
   });
 }
@@ -89,7 +89,20 @@ ChipsController.GetChipByID = function(req, res) {
   var promise = query.exec();
 
   promise.then(function(Chip) {
-    res.json(Chip);
+    if(Chip === null) {
+		res.status(500).json({message: "Failed to find a chip with that ID"});
+		return;
+	}
+	// Make a second database query to find the chip detail
+	var detail = ChipsModelModel.findOne({_id: Chip.modelId});
+	var promise = detail.exec();
+	
+	promise.then(function(ChipDetail) {
+		res.json({data: {code: Chip.code, detail: ChipDetail}});
+		
+	}, function(err) {
+		res.status(500).json({error: err});
+	});
   }, function(err) {
     res.status(500).json({error: err});
   });
@@ -105,7 +118,7 @@ ChipsController.UpdateChip = function(req, res) {
 
   promise.then(function(ChipModelModel) {
     if(ChipModelModel == null) {
-      res.send({status: "BAD", message: "No ChipModel to update"});
+      res.status(500).json({error: "No ChipModel with that ID to update"});
       return;
     }
     
@@ -113,15 +126,15 @@ ChipsController.UpdateChip = function(req, res) {
     promiseSave.then(function(ChipModelModel){
       res.json(ChipModelModel);
     },function(err){
-      res.send(err);
+      res.status(500).json({error: err});
     });
   }, function(err) {
-      res.send(err);
+      res.status(500).json({error: err});
   });
 }
 
 // DELETE API_IP/VERSION/Chips/:id
-// Delete a Chip permanently
+// Delete a Chip permanently (includes model and all linked chips)
 // DeleteChips
 ChipsController.DeleteChip = function(req, res) {
   var query = ChipsModelModel.findOne({_id: req.params.id});
@@ -135,15 +148,13 @@ ChipsController.DeleteChip = function(req, res) {
 
     var query = ChipsModel.find({modelId: modelId});
 
-    var promiseDeleteLinked = query.exec();
-
     promiseRemove.then(function(){
-      res.json({status: "OK", message: "Chip removed"});
+      res.status(200).json({data: {message: "Chip removed"}});
     },function(err){
-      res.send(err);
+      res.status(500).json({error: err});
     });
   }, function(err) {
-      res.send(err);
+      res.status(500).json({error: err});
   });
 }
 

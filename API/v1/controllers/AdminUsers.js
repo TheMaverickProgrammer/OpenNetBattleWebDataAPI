@@ -21,7 +21,7 @@ AdminUsersController.AddAdminUser = function(req, res) {
   var promise = model.save();
 
   promise.then(function(adminUser) {
-    res.json(adminUser);
+    res.json({data: adminUser});
   }, function(err) {
     res.status(500).json({error: err});
   });

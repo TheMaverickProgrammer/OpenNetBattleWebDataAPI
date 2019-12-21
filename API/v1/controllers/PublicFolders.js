@@ -26,7 +26,7 @@ PublicFoldersController.AddPublicFolder = function(req, res) {
   var promise = model.save();
 
   promise.then(function(PublicFolders) {
-    res.json(PublicFolders);
+    res.json({data: PublicFolders});
   }, function(err) {
     res.status(500).json({error: err});
   });
@@ -41,7 +41,7 @@ PublicFoldersController.GetPublicFoldersList = function(req, res) {
   var promise = query.exec();
 
   promise.then(function(PublicFolders) {
-    res.json({PublicFolders});
+    res.json({data: PublicFolders});
   }, function(err) {
     res.status(500).json({error: err});
   });
@@ -56,7 +56,7 @@ PublicFoldersController.GetPublicFolderByID = function(req, res) {
   var promise = query.exec();
 
   promise.then(function(PublicFolders) {
-    res.json(PublicFolders);
+    res.json({data: PublicFolders});
   }, function(err) {
     res.status(500).json({error: err});
   });
@@ -71,15 +71,16 @@ PublicFoldersController.DeletePublicFolder = function(req, res) {
   var promise = query.exec();
 
   promise.then(function(PublicFolders) {
+    var name = PublicFolders.name;
     var promiseRemove = PublicFolders.remove();
 
     promiseRemove.then(function(){
-      res.json({status: "OK", message: "PublicFolders removed"});
+      res.status(200).json({data: {message: "Public folder " + name + " removed"}});
     },function(err){
-      res.send(err);
+      res.status(500).json({error: err});
     });
   }, function(err) {
-      res.send(err);
+      res.status(500).json({error: err});
   });
 }
 
