@@ -83,7 +83,8 @@ var url = settings.url,
     pass = settings.password;
 
 var connectString = 'mongodb://'+user+":"+pass+"@"+url+':'+port+'/'+collection+"?authSource=admin";
-mongoose.connect(connectString, { useMongoClient: true} );
+mongoose.set('useCreateIndex', true);
+mongoose.connect(connectString, { useNewUrlParser: true, useUnifiedTopology: true} );
 
 // Check the state of the pending transactions
 var db = mongoose.connection;
