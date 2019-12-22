@@ -11,9 +11,9 @@ View the public documentation hosted by postman [>> here <<](https://documenter.
 A mongo DB server for the data store
 
 # install
-Clone this project
-Enter the directory via console
-Enter `npm install`
+- Clone this project
+- Enter the directory via console
+- Enter `npm install`
 
 # running
 `npm start`
