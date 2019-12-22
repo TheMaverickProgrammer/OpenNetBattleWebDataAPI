@@ -66,6 +66,11 @@ UsersController.GetUserByID = function(req, res) {
 // Update a User
 // UpdateUser
 UsersController.UpdateUser = function(req, res) {
+  if(!(req.user.isAdmin || req.params.id == req.user.userId)) {
+	res.status(401).json({error: "Not Authenticated"});
+	return;
+  }
+
   UsersModel.findById({_id: req.params.id}).then((user) => {
       user.username = req.body.publicName || user.username;
       user.twitter  = req.body.twitterUrl || user.twitter;

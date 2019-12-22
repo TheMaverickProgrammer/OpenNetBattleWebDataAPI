@@ -1,14 +1,17 @@
 # battlenetwork-web-api
-Web api for the open battlenetwork project
+Web api for the open battlenetwork project [>> here <<](https://github.com/TheMaverickProgrammer/battlenetwork)
 
 There will not be a tutorial beyond this README. The web api is not intended to be expanded upon but to help mobile users organize their folders
 and share optimal folders with eachother.
+
+# docs
+View the public documentation hosted by postman [>> here <<](https://documenter.getpostman.com/view/9873403/SWLYAWAU?version=latest)
 
 # requirements
 A mongo DB server for the data store
 
 # install
-Clone this project 
+Clone this project
 Enter the directory via console
 Enter `npm install`
 

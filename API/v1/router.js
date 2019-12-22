@@ -62,18 +62,18 @@ module.exports = function Router(database) {
 
   router.route('/users/:id')
     .get(auth.isAdminAuthenticated, users.GetUserByID)
-    .put(auth.isAdminAuthenticated, users.UpdateUser)
+    .put(auth.isAuthenticated, users.UpdateUser)
     .delete(auth.isAdminAuthenticated, users.DeleteUser);
 
   // Use the chips module as an endpoint
   router.route('/chips')
     .get(auth.isAuthenticated, chips.GetChipsList)
-    .post(auth.isAuthenticated, chips.AddChip);
+    .post(auth.isAdminAuthenticated, chips.AddChip);
 
   router.route('/chips/:id')
     .get(auth.isAuthenticated, chips.GetChipByID)
-    .put(auth.isAuthenticated, chips.UpdateChip)
-    .delete(auth.isAuthenticated, chips.DeleteChip);
+    .put(auth.isAdminAuthenticated, chips.UpdateChip)
+    .delete(auth.isAdminAuthenticated, chips.DeleteChip);
 
   // Use the folders module as an endpoint
   router.route('/folders')

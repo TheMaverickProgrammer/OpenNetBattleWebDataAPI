@@ -121,10 +121,28 @@ ChipsController.UpdateChip = function(req, res) {
       res.status(500).json({error: "No ChipModel with that ID to update"});
       return;
     }
-    
+
+    ChipModelModel.name = req.body.name || ChipModelModel.name;
+    ChipModelModel.description = req.body.description || ChipModelModel.description;
+    ChipModelModel.verboseDescription = req.body.verboseDescription || ChipModelModel.verboseDescription;
+    ChipModelModel.codes = req.body.codes || ChipModelModel.codes;
+    ChipModelModel.damage = req.body.damage || ChipModelModel.damage;
+    ChipModelModel.element = req.body.element || ChipModelModel.element;
+    ChipModelModel.secondaryElement = req.body.secondaryElement || ChipModelModel.secondaryElement;
+    ChipModelModel.image = req.body.image || ChipModelModel.image;
+    ChipModelModel.icon = req.body.icon || ChipModelModel.icon;
+
+  // Force description to fit 200 char limit
+  if(typeof ChipModel.description !== 'undefined')
+  ChipModel.description = ChipModel.description.substring(0, 200);
+
+  // Force verboseDescription to fit a 1000 char limit
+  if(typeof ChipModel.verboseDescription !== 'undefined') 
+    ChipModel.verboseDescription = ChipModel.verboseDescription.substring(0, 1000);
+	
     var promiseSave = ChipModelModel.save();
     promiseSave.then(function(ChipModelModel){
-      res.json(ChipModelModel);
+      res.json({data: ChipModelModel});
     },function(err){
       res.status(500).json({error: err});
     });
