@@ -4,5 +4,5 @@
   "user": "mongoAdmin",
   "password": "sign into mongo database",
   "port": "27017",
-  "collection": "local"
+  "database": "local"
 }

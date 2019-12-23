@@ -78,11 +78,11 @@ var mongooseConnection = mongoose.createConnection();
 // Connect to mongo
 var url = settings.url,
     port = settings.port,
-    collection = settings.collection,
+    database = settings.database,
     user = settings.user,
     pass = settings.password;
 
-var connectString = 'mongodb://'+user+":"+pass+"@"+url+':'+port+'/'+collection+"?authSource=admin";
+var connectString = 'mongodb://'+user+":"+pass+"@"+url+':'+port+'/'+database+"?authSource=admin";
 mongoose.set('useCreateIndex', true);
 mongoose.connect(connectString, { useNewUrlParser: true, useUnifiedTopology: true} );
 

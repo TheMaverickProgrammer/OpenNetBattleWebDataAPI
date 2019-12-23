@@ -42,13 +42,13 @@ ChipsController.AddChip = function(req, res) {
     icon: req.body.icon
   };
 
-  // Force description to fit 200 char limit
+  // Force description to fit 30 char limit
   if(typeof ChipModel.description !== 'undefined')
-  ChipModel.description = ChipModel.description.substring(0, 200);
+  ChipModel.description = ChipModel.description.substring(0, 30);
 
-  // Force verboseDescription to fit a 1000 char limit
+  // Force verboseDescription to fit a 300 char limit
   if(typeof ChipModel.verboseDescription !== 'undefined') 
-    ChipModel.verboseDescription = ChipModel.verboseDescription.substring(0, 1000);
+    ChipModel.verboseDescription = ChipModel.verboseDescription.substring(0, 300);
 
   // Execute a query
   // Yes it's a mongoose model of a chip model
@@ -132,13 +132,13 @@ ChipsController.UpdateChip = function(req, res) {
     ChipModelModel.image = req.body.image || ChipModelModel.image;
     ChipModelModel.icon = req.body.icon || ChipModelModel.icon;
 
-  // Force description to fit 200 char limit
-  if(typeof ChipModel.description !== 'undefined')
-  ChipModel.description = ChipModel.description.substring(0, 200);
+  // Force description to fit 30 char limit
+  if(typeof ChipModelModel.description !== 'undefined')
+  ChipModelModel.description = ChipModelModel.description.substring(0, 30);
 
-  // Force verboseDescription to fit a 1000 char limit
-  if(typeof ChipModel.verboseDescription !== 'undefined') 
-    ChipModel.verboseDescription = ChipModel.verboseDescription.substring(0, 1000);
+  // Force verboseDescription to fit a 300 char limit
+  if(typeof ChipModelModel.verboseDescription !== 'undefined') 
+  ChipModelModel.verboseDescription = ChipModelModel.verboseDescription.substring(0, 300);
 	
     var promiseSave = ChipModelModel.save();
     promiseSave.then(function(ChipModelModel){
