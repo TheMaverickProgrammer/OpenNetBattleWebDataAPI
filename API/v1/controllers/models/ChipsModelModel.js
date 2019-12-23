@@ -3,7 +3,7 @@ mongoose.Promise = global.Promise;
 var Schema = mongoose.Schema;
 
 var ChipsModelModel = Schema({
-  name: {type: String, required: true},
+  name: {type: String, required: true, unique: true},
   damage: {type: Number, required: true},
   element: {type: String, required: true},
   secondaryElement: {type: String, default: "None"},
