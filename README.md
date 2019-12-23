@@ -35,3 +35,8 @@ As of now, only the database settings can be configured
 ```
 
 **DO NOT CHANGE `dbType`!** This api uses mongoose module for mongo databases only
+
+# Further security
+For public use, some additional security should be been not present in this distribution. For instance, I have also locked-out the `POST /admin` endpoint in my build after creating my first admin account so that no one else can create admins on the fly.
+
+You may also want to lock out your ports and API access completely except for white-listed IP addresses. 
