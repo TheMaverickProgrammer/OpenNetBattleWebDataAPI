@@ -1,0 +1,3 @@
+﻿  ConsoleApplication.cpp
+httplib.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/INCREMENTAL:NO' specification
+  ConsoleApplication.vcxproj -> C:\Users\Bountyhunter\Code\open_netbattle_api\client\ConsoleApplication\x64\Debug\ConsoleApplication.exe
