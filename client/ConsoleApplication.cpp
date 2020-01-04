@@ -1,4 +1,4 @@
-// ConsoleApplication.cpp : This file contains the 'main' function. Program execution begins and ends there.
+﻿// ConsoleApplication.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 #include <cctype>
 #include <winsock2.h>
@@ -11,6 +11,7 @@
 #include <iterator>
 #include <json/json.h>
 #include <string>
+#include <conio.h>
 
 #define MAKE_API_URI(x) (std::string("/v1/") + x)
 
@@ -25,6 +26,24 @@ std::vector<std::string> split(const std::string& str, const char delim = ' ')
 
   return cont;
 }
+
+#if defined(_MSC_VER) && _MSC_VER > 1310
+// Visual C++ 2005 and later require the source files in UTF-8, and all strings 
+// to be encoded as wchar_t otherwise the strings will be converted into the 
+// local multibyte encoding and cause errors. To use a wchar_t as UTF-8, these 
+// strings then need to be convert back to UTF-8. This function is just a rough 
+// example of how to do this.
+# define utf8(str)  ConvertToUTF8(L##str)
+const char * ConvertToUTF8(const wchar_t * pStr) {
+  static char szBuf[1024];
+  WideCharToMultiByte(CP_UTF8, 0, pStr, -1, szBuf, sizeof(szBuf), NULL, NULL);
+  return szBuf;
+}
+#else
+// Visual C++ 2003 and gcc will use the string literals as is, so the files 
+// should be saved as UTF-8. gcc requires the files to not have a UTF-8 BOM.
+# define utf8(str)  str
+#endif
 
 template<typename StringList>
 const bool matches(StringList& list, const char* match) {
@@ -42,14 +61,41 @@ void login(httplib::Client& client) {
   std::getline(std::cin, user);
 
   std::cout << "pass: ";
-  std::getline(std::cin, pass);
+  char input[256];
+  std::stringstream ss(input);
+
+  char c = 0;
+  size_t idx = 0;
+  do {
+    c = _getch();
+    if (idx > 0 && (int)c == 8) {
+      std::cout << c << " " << c;
+      idx--;
+      continue;
+    }
+    else if ((int)c == 13) {
+      break;
+    }
+    else if (idx == 0 && (int)c == 8) {
+      continue;
+    }
+
+    std::cout << "*";
+    input[idx++] = c;
+  } while (idx < 256);
+
+  std::cout << std::endl;
+  input[idx] = '\0';
+
+  std::getline(ss, pass);
   client.set_basic_auth(user.c_str(), pass.c_str());
 }
 
 void help() {
   tabulate::Table table;
-  table.add_row({ "command", "description", "example" });
-  table.format().hide_border().font_color(tabulate::Color::yellow);
+  auto first_row = table.add_row({ "command", "description", "example" });
+  table.format().hide_border();
+  first_row.format().font_color(tabulate::Color::yellow);
 
   table.add_row({ "view", "list all entries. If ID is given, list the contents of that ID.", "view users 19" });
   table.add_row({ "delete", "ID required. Permanently deletes a resource", "delete folder 143" });
@@ -57,10 +103,99 @@ void help() {
   table.add_row({ "update", "ID required. Permanently alters a resource", "update folder 143 ..." });
   table.add_row({ "login", "Prompts for account username, pass, and then saves the auth", "login" });
   table.add_row({ "quit", "Exits and any login information is lost", "quit" });
+  table.add_row({ "help", "This message. Alt type `help resources` for a list of resources", "help resources" });
+  std::cout << table << std::endl;
+}
+
+void showResources() {
+  tabulate::Table table;
+  auto first_row = table.add_row({ "resources", "info" });
+  table.format().hide_border();
+  first_row.format().font_color(tabulate::Color::yellow);
+
+  table.add_row({ "users", "account information" });
+  table.add_row({ "folders", "If signed in as a user, accesses folders for that account" });
+  table.add_row({ "public-folders", "accesses publically available folders that\nusers can import to their account" });
+  table.add_row({ "chips", "chip information" });
+  table.add_row({ "admin", "Only admin can create other admins" });
 
   std::cout << table << std::endl;
-
 }
+
+const char* getElementUnicode(const char* str) {
+  if (strcasecmp("fire", str) == 0) {
+    return utf8("🔥");
+  }
+  else if (strcasecmp("sword", str) == 0) {
+    return utf8("⚔");
+  }
+  else if (strcasecmp("elec", str) == 0) {
+    return utf8("⚡");
+  }
+  else if (strcasecmp("summon", str) == 0) {
+    return utf8("▩");
+  }
+  else if (strcasecmp("cursor", str) == 0) {
+    return utf8("⯐");
+  }
+  else if (strcasecmp("wind", str) == 0) {
+    return utf8("☁️");
+  } 
+  else if (strcasecmp("ice", str) == 0) {
+    return utf8("❄");
+  }
+  else if (strcasecmp("plus", str) == 0) {
+    return utf8("+");
+  }
+  else if (strcasecmp("wood", str) == 0) {
+    return utf8("🌲");
+  }
+  else if (strcasecmp("break", str) == 0) {
+    return utf8("⭙");
+  }
+  else if (strcasecmp("aqua", str) == 0) {
+    return utf8("💧");
+  }
+  return utf8("-");
+}
+
+void displayChipsResource(const Json::Value& data, bool detail = false) {
+  tabulate::Table table;
+
+  if (detail) {
+    auto& f = table.add_row({ "code", "name", "damage", "element", "image", "timestamp" }).format();
+    f.background_color(tabulate::Color::blue);
+    f.font_color(tabulate::Color::white);
+    f.hide_border();
+    table.column(3).format().multi_byte_characters(true);
+    table.column(4).format().width(25);
+    const auto item = data;
+
+    table.add_row({
+                    item["code"].asCString(),
+                    item["detail"]["name"].asCString(),
+                    std::to_string(item["detail"]["damage"].asInt()).c_str(),
+                    item["detail"]["element"].asCString(),
+                    item["detail"]["image"].asCString(),
+                    item["detail"]["timestamp"].asCString()
+      });
+  }
+  else {
+    auto& f = table.add_row({ "ID", "code" }).format();
+    f.background_color(tabulate::Color::blue);
+    f.font_color(tabulate::Color::white);
+    f.hide_border();
+
+    for (int i = 0; i < data.size(); i++) {
+      const auto item = data[i];
+
+      table.add_row({ item["_id"].asCString(), item["code"].asCString() });
+    }
+  }
+
+  std::cout << table << std::endl;
+}
+
 void handleGetRequest(httplib::Client& client, std::vector<std::string>& input) {
 
 }
@@ -77,18 +212,33 @@ void handleDeleteRequest(httplib::Client& client, std::vector<std::string>& inpu
 
 }
 
-void handleViewRequest(httplib::Client& client, std::string& input) {
-  input = MAKE_API_URI(input);
+void handleViewRequest(httplib::Client& client, std::vector<std::string>& input) {
+  std::string uri;
+  std::string resource = input[0];
 
-  std::cout << "Making request to \"" << input << "\"" << std::endl;
+  if (!( 
+    matches(resource, "chips") 
+    || matches(resource, "users")
+    || matches(resource, "folders")
+    || matches(resource, "public-folders")
+    || matches(resource, "admin")
+      )) {
+    std::string message = (std::string("unknown resource ") + resource);
+    message += "\nType `help resources` for a list of resources";
+    throw std::exception(message.c_str());
+  }
 
-  auto res = client.Get(input.c_str());
+  if (input.size() == 1) {
+    uri = MAKE_API_URI(resource);
+  }
+  else {
+    // _id
+    uri = MAKE_API_URI(resource + "/" + input[1]);
+  }
 
-  tabulate::Table table;
-  auto& f = table.add_row({ "ID", "data" }).format();
-  f.background_color(tabulate::Color::blue);
-  f.font_color(tabulate::Color::white);
-  f.hide_border();
+  std::cout << "Making request to \"" << uri << "\"";
+
+  auto res = client.Get(uri.c_str());
 
   if (res) {
 
@@ -108,22 +258,30 @@ void handleViewRequest(httplib::Client& client, std::string& input) {
 
     if (!parsingSuccessful)
     {
+      std::cout << std::endl;
       throw std::exception("could not read json");
     }
     
     const Json::Value arr = json["data"];
+    tabulate::Table results;
+    int size = arr.size();
 
-    for (int i = 0; i < arr.size(); i++) {
-      const auto item = arr[i];
+    if (size > 0) size -= 1; // json value returns +1 results for the table header
+    auto& f = results.add_row({ std::to_string(size) + " results" }).format();
+    f.background_color(tabulate::Color::blue);
+    f.font_color(tabulate::Color::white);
+    f.hide_border();
 
-      table.add_row({ item["_id"].asCString(), item["code"].asCString() });
+    std::cout << "..." << results << std::endl;
+
+    if (resource == "chips") {
+      displayChipsResource(arr, input.size() != 1);
     }
   }
   else {
+    std::cout << std::endl;
     throw std::runtime_error("http result was nullptr");
   }
-
-  std::cout << table << std::endl;
 }
 
 void handleCommands(httplib::Client& client, std::string& input) {
@@ -133,6 +291,10 @@ void handleCommands(httplib::Client& client, std::string& input) {
   }
   else if (matches(input, "help")) {
     help();
+    return;
+  }
+  else if (matches(input, "help resources")) {
+    showResources();
     return;
   }
 
@@ -161,7 +323,7 @@ void handleCommands(httplib::Client& client, std::string& input) {
     }
     else if (matches(tokens, "view")) {
       tokens.erase(tokens.begin());
-      handleViewRequest(client, tokens[0]);
+      handleViewRequest(client, tokens);
     }
     else {
       std::cout << "unknown commmand '" << input << "'" << std::endl;
