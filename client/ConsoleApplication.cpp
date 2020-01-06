@@ -189,7 +189,7 @@ void displayChipsResource(const Json::Value& data, bool detail = false) {
   tabulate::Table table;
 
   if (detail) {
-    auto& f = table.add_row({ "code", "name", "damage", "element", "image", "timestamp" }).format();
+    auto& f = table.add_row({ "code", "model ID", "name", "damage", "element", "image", "timestamp" }).format();
     f.background_color(tabulate::Color::blue);
     f.font_color(tabulate::Color::white);
     f.hide_border();
@@ -199,6 +199,7 @@ void displayChipsResource(const Json::Value& data, bool detail = false) {
 
     table.add_row({
                     item["code"].asCString(),
+                    item["detail"]["_id"].asCString(),
                     item["detail"]["name"].asCString(),
                     std::to_string(item["detail"]["damage"].asInt()).c_str(),
                     item["detail"]["element"].asCString(),
@@ -219,6 +220,37 @@ void displayChipsResource(const Json::Value& data, bool detail = false) {
     }
   }
 
+  std::cout << table << std::endl;
+}
+
+void displayChipsModelResource(const Json::Value& data) {
+  tabulate::Table table;
+
+  auto& f = table.add_row({ "codes", "model ID", "name", "damage", "element", "image", "timestamp" }).format();
+  f.background_color(tabulate::Color::blue);
+  f.font_color(tabulate::Color::white);
+  f.hide_border();
+  table.column(3).format().multi_byte_characters(true);
+  table.column(4).format().width(25);
+  const auto item = data;
+
+  std::string codes;
+
+  auto jsonCodes = item["codes"];
+  for (auto c : jsonCodes) {
+    codes += c.asString() + ", ";
+  }
+
+  table.add_row({
+                  codes,
+                  item["_id"].asCString(),
+                  item["name"].asCString(),
+                  std::to_string(item["damage"].asInt()).c_str(),
+                  item["element"].asCString(),
+                  item["image"].asCString(),
+                  item["timestamp"].asCString()
+    });
+  
   std::cout << table << std::endl;
 }
 
@@ -331,11 +363,219 @@ void handlePostRequest(httplib::Client& client, std::vector<std::string>& input)
 }
 
 void handlePutRequest(httplib::Client& client, std::vector<std::string>& input) {
+  std::string uri;
+  std::string resource = input[0];
 
+  if (!(
+    matches(resource, "chips")
+    || matches(resource, "users")
+    || matches(resource, "folders")
+    || matches(resource, "public-folders")
+    || matches(resource, "admin")
+    )) {
+    std::string message = (std::string("unknown resource ") + resource);
+    message += "\nType `help resources` for a list of resources";
+    throw std::exception(message.c_str());
+  }
+
+  if (input.size() < 2) {
+    throw std::exception("provide an ID of the resource you want to update");
+  }
+
+  uri = MAKE_API_URI(resource);
+
+  uri += "/" + input[1];
+
+  std::string params;
+
+  for (int i = 2; i < input.size(); i++) {
+    auto tokens = split(input[i], '=');
+
+    if (tokens.size() != 2) {
+      std::string message = "Token " + input[i] + " did not contain a key-value pair separated by \"=\"\nRequest aborted.";
+      throw std::exception(message.c_str());
+    }
+
+    params += input[i] + "&";
+  }
+
+  std::cout << "Making request to \"" << uri << "\"";
+
+  auto res = client.Put(uri.c_str(), params, "application/x-www-form-urlencoded");
+
+  if (res) {
+
+    Json::CharReaderBuilder builder;
+    Json::CharReader* reader = builder.newCharReader();
+
+    Json::Value json;
+    std::string errors;
+
+    bool parsingSuccessful = reader->parse(
+      res->body.c_str(),
+      res->body.c_str() + res->body.size(),
+      &json,
+      &errors
+    );
+    delete reader;
+
+    if (!parsingSuccessful)
+    {
+      std::cout << std::endl;
+      throw std::exception("could not read json");
+    }
+
+    const Json::Value error = json["error"];
+
+    if (error.size()) {
+      std::cout << std::endl;
+      std::string message;
+      bool isChain = false; // whether or not we need to accumulate all messages;
+
+      auto members = error.getMemberNames();
+      for (auto& m : members) {
+        if (m == "errors") {
+          isChain = true;
+        }
+      }
+
+      if (isChain) {
+        for (auto& m : error["errors"]) {
+          message += m["message"].asString() + "\n";
+        }
+      }
+      else {
+        try {
+          message = error["message"].asString();
+        }
+        catch (...) {
+          message = error.asString();
+        }
+      }
+
+      std::cout << std::endl;
+      throw std::exception(message.c_str());
+    }
+
+    const Json::Value arr = json["data"];
+    tabulate::Table results;
+    int size = arr.size();
+
+    if (size > 0) size -= 1; // json value returns +1 results for the table header
+    auto& f = results.add_row({ std::to_string(size) + " results" }).format();
+    f.background_color(tabulate::Color::blue);
+    f.font_color(tabulate::Color::white);
+    f.hide_border();
+
+    std::cout << "..." << results << std::endl;
+
+    if (resource == "chips") {
+      displayChipsModelResource(arr);
+    }
+  }
+  else {
+    std::cout << std::endl;
+    throw std::runtime_error("http result was nullptr");
+  }
 }
 
 void handleDeleteRequest(httplib::Client& client, std::vector<std::string>& input) {
+  std::string uri;
+  std::string resource = input[0];
 
+  if (!(
+    matches(resource, "chips")
+    || matches(resource, "users")
+    || matches(resource, "folders")
+    || matches(resource, "public-folders")
+    || matches(resource, "admin")
+    )) {
+    std::string message = (std::string("unknown resource ") + resource);
+    message += "\nType `help resources` for a list of resources";
+    throw std::exception(message.c_str());
+  }
+
+  if (input.size() < 2) {
+    throw std::exception("provide an ID of the resource you want to delete");
+  }
+
+  uri = MAKE_API_URI(resource);
+
+  uri += "/" + input[1];
+
+  std::cout << "Making request to \"" << uri << "\"";
+
+  auto res = client.Delete(uri.c_str());
+
+  if (res) {
+
+    Json::CharReaderBuilder builder;
+    Json::CharReader* reader = builder.newCharReader();
+
+    Json::Value json;
+    std::string errors;
+
+    bool parsingSuccessful = reader->parse(
+      res->body.c_str(),
+      res->body.c_str() + res->body.size(),
+      &json,
+      &errors
+    );
+    delete reader;
+
+    if (!parsingSuccessful)
+    {
+      std::cout << std::endl;
+      throw std::exception("could not read json");
+    }
+
+    const Json::Value error = json["error"];
+
+    if (error.size()) {
+      std::cout << std::endl;
+      std::string message;
+      bool isChain = false; // whether or not we need to accumulate all messages;
+
+      auto members = error.getMemberNames();
+      for (auto& m : members) {
+        if (m == "errors") {
+          isChain = true;
+        }
+      }
+
+      if (isChain) {
+        for (auto& m : error["errors"]) {
+          message += m["message"].asString() + "\n";
+        }
+      }
+      else {
+        message = error["message"].asString();
+      }
+
+      std::cout << std::endl;
+      throw std::exception(message.c_str());
+    }
+
+    const Json::Value arr = json["data"];
+    tabulate::Table results;
+    int size = arr.size();
+
+    if (size > 0) size -= 1; // json value returns +1 results for the table header
+    auto& f = results.add_row({ std::to_string(size) + " results" }).format();
+    f.background_color(tabulate::Color::blue);
+    f.font_color(tabulate::Color::white);
+    f.hide_border();
+
+    std::cout << "..." << results << std::endl;
+
+    if (resource == "chips") {
+      displayChipsResource(arr, input.size() != 1);
+    }
+  }
+  else {
+    std::cout << std::endl;
+    throw std::runtime_error("http result was nullptr");
+  }
 }
 
 void handleViewRequest(httplib::Client& client, std::vector<std::string>& input) {
