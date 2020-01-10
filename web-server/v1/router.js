@@ -54,6 +54,21 @@ module.exports = function Router(database) {
 
   /** RESOURCES */
 
+  // must use this endpoint to login and get a session cookie
+  router.get('/login', auth.isAuthenticated, function(req, res){
+    res.status(200).json({
+        status: 'Login successful!'
+    });
+  });
+  
+  // Will always logout and clear the session cookie
+  router.get('/logout', function(req, res){
+    req.logout();
+    res.status(200).json({
+      status: 'Logout successful!'
+    });
+  });
+
   // Use this endpoint to create admins remotely
   router.route('/admin')
     .post(adminUsers.AddAdminUser);
@@ -104,19 +119,6 @@ module.exports = function Router(database) {
   router.route('/public-folders/:id')
     .get(auth.isAuthenticated, publicFolders.GetPublicFolderByID)
     .delete(auth.isAdminAuthenticated, publicFolders.DeletePublicFolder);
-
-  router.get('/login', auth.isAuthenticated, function(req, res){
-    res.status(200).json({
-        status: 'Login successful!'
-    });
-  });
-  
-  router.get('/logout', auth.isAuthenticated, function(req, res){
-    req.logout();
-    res.status(200).json({
-      status: 'Logout successful!'
-    });
-  });
 
   return router;
 };

@@ -11,7 +11,6 @@ module.exports = function Auth(database) {
 
   // Used when regular user is not found
   var verifyAdminPassword = function(username, password, cb) {
-    var db = database;
     AdminUsersModel.findOne({username: username},
      function(err, adminUser) {
         if(err) {
@@ -22,7 +21,7 @@ module.exports = function Auth(database) {
           } else {
             // Check password using bcrypt
             bcrypt.compare(password, adminUser.password, function(err, isMatch) {
-              if(err) { console.log("err: " + JSON.stringify(err)); return cb(err); }
+              if(err) { return cb(err); }
 			        isMatch = {isAdmin: true, adminUser };
               //console.log("user logged in status: " + JSON.stringify(isMatch));
               cb(null, isMatch);
@@ -44,7 +43,7 @@ module.exports = function Auth(database) {
           } else {
             // Check password using bcrypt
             bcrypt.compare(password, user.password, function(err, isMatch) {
-              if(err) { console.log("err: " + JSON.stringify(err)); return cb(err); }
+              if(err) { return cb(err); }
 			        isMatch = { isAdmin: false, user };
               //console.log("user logged in status: " + JSON.stringify(isMatch));
               cb(null, isMatch);
@@ -59,12 +58,29 @@ module.exports = function Auth(database) {
   });
 
   passport.deserializeUser(function(username, done) {
+    // find a user or admin if user fails
     var query = UsersModel.findOne({username: username});
     var promise = query.exec();
 
-      promise.then(function(user) {
+    promise.then(function(user) {
+      if(!user) {
+        var query = AdminUsersModel.findOne({username: username});
+        var promise = query.exec();
+    
+        promise.then(function(user) {
+          if(user){
+            user.isAdmin = true;
+            done(null, user);
+          } else {
+            done({error: "Not found or passwords did not match"}, false);
+          }
+        }, function(err) {
+          done(err, false);
+        });
+      }else {
         done(null, user);
-      }, function(err) {
+      }
+    }, function(err) {
       done(err, false);
     });
   });
@@ -77,16 +93,25 @@ module.exports = function Auth(database) {
           if(err) { return done(err); }
 
           // Password did not match
-          if(!isMatch || !isMatch.user) { return done(null, false); }
+          if(!isMatch ) { return done(null, false); }
  
           var isAdmin = isMatch.isAdmin || false;
-		      var username = isMatch.user.username;
-		      var userId = isMatch.user._id;
-		  
+
+		      var username; 
+          var userId;
+
+          if(!isAdmin) {
+            username = isMatch.user.username;
+            userId = isMatch.user._id;
+          } else {
+            username = isMatch.adminUser.username;
+            userId = isMatch.adminUser._id;
+          }
+
           // Success
           var userInfo = {
             username: username,
-			      userId: userId,
+			      userId: (isAdmin? null : userId),
             isAdmin: isAdmin
           };
 
@@ -103,7 +128,7 @@ module.exports = function Auth(database) {
           if(err) { return done(err); }
 
           // Password did not match
-          if(!isMatch || !isMatch.user) { return done(null, false); }
+          if(!isMatch) { return done(null, false); }
  
           var isAdmin = isMatch.isAdmin || false;
 
@@ -111,7 +136,7 @@ module.exports = function Auth(database) {
           // for this type of authentication
 		      if(!isAdmin) { return done(null, false); }
       
-		      var username = isMatch.user.username;
+		      var username = isMatch.adminUser.username;
           
           // Success
           var userInfo = {
