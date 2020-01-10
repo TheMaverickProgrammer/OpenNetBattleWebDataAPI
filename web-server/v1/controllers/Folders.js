@@ -108,7 +108,7 @@ FoldersController.DeleteFolder = function(req, res) {
   promise.then(function(Folders) {
     var name = Folders.name;
     var promiseRemove = Folders.remove();
-
+    promiseRemove.exec();
     promiseRemove.then(function(){
       res.status(200).json({data: {message: "Folder " + name + " removed"}});
     },function(err){

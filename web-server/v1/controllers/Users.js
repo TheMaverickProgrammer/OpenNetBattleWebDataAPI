@@ -99,6 +99,7 @@ UsersController.DeleteUser = function(req, res) {
   promise.then(function(user) {
     var name = user.username;
     var promiseRemove = post.remove();
+    promiseRemove.exec();
 
     promiseRemove.then(function(){
       res.status(200).json({data: {message: "User " + name + " removed"}});

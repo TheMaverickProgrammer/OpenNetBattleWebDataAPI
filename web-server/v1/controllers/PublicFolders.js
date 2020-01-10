@@ -73,6 +73,7 @@ PublicFoldersController.DeletePublicFolder = function(req, res) {
   promise.then(function(PublicFolders) {
     var name = PublicFolders.name;
     var promiseRemove = PublicFolders.remove();
+    promiseRemove.exec();
 
     promiseRemove.then(function(){
       res.status(200).json({data: {message: "Public folder " + name + " removed"}});

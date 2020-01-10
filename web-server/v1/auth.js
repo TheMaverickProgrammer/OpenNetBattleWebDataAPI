@@ -6,15 +6,12 @@ module.exports = function Auth(database) {
   var passport = require('passport');
   var BasicStrategy = require('passport-http').BasicStrategy;
   var bcrypt = require('bcryptjs');
-
   var UsersModel = require('./controllers/models/UsersModel');
+  var AdminUsersModel = require('./controllers/models/AdminUsersModel');
 
   // Used when regular user is not found
   var verifyAdminPassword = function(username, password, cb) {
     var db = database;
-
-    var AdminUsersModel = require('./controllers/models/AdminUsersModel');
-
     AdminUsersModel.findOne({username: username},
      function(err, adminUser) {
         if(err) {
@@ -26,7 +23,7 @@ module.exports = function Auth(database) {
             // Check password using bcrypt
             bcrypt.compare(password, adminUser.password, function(err, isMatch) {
               if(err) { console.log("err: " + JSON.stringify(err)); return cb(err); }
-			  isMatch = {isAdmin: true};
+			        isMatch = {isAdmin: true, adminUser };
               //console.log("user logged in status: " + JSON.stringify(isMatch));
               cb(null, isMatch);
             });
@@ -48,7 +45,7 @@ module.exports = function Auth(database) {
             // Check password using bcrypt
             bcrypt.compare(password, user.password, function(err, isMatch) {
               if(err) { console.log("err: " + JSON.stringify(err)); return cb(err); }
-			  isMatch = { isAdmin: false, user };
+			        isMatch = { isAdmin: false, user };
               //console.log("user logged in status: " + JSON.stringify(isMatch));
               cb(null, isMatch);
             });
@@ -65,9 +62,9 @@ module.exports = function Auth(database) {
     var query = UsersModel.findOne({username: username});
     var promise = query.exec();
 
-    promise.then(function(user) {
-      done(null, user);
-    }, function(err) {
+      promise.then(function(user) {
+        done(null, user);
+      }, function(err) {
       done(err, false);
     });
   });
@@ -80,23 +77,16 @@ module.exports = function Auth(database) {
           if(err) { return done(err); }
 
           // Password did not match
-          if(!isMatch) { return done(null, false); }
+          if(!isMatch || !isMatch.user) { return done(null, false); }
  
           var isAdmin = isMatch.isAdmin || false;
-		  var username = "";
-		  var userId = null;
-		  
-	      if(typeof isMatch.user == "undefined" && isAdmin) {
-		      username = "admin";
-		  } else if(isMatch.user) {
-		      username = isMatch.user.username;
-			  userId = isMatch.user._id;
-		  }
+		      var username = isMatch.user.username;
+		      var userId = isMatch.user._id;
 		  
           // Success
           var userInfo = {
             username: username,
-			userId: userId,
+			      userId: userId,
             isAdmin: isAdmin
           };
 
@@ -113,19 +103,20 @@ module.exports = function Auth(database) {
           if(err) { return done(err); }
 
           // Password did not match
-          if(!isMatch) { return done(null, false); }
+          if(!isMatch || !isMatch.user) { return done(null, false); }
  
           var isAdmin = isMatch.isAdmin || false;
-		  
-		  // We must be admin otherwise something went seriously wrong
-		  if(!isAdmin) { return done(null, false); }
-		  
-		  var username = "admin";
-		  
+
+          // We must be admin otherwise something went seriously wrong
+          // for this type of authentication
+		      if(!isAdmin) { return done(null, false); }
+      
+		      var username = isMatch.user.username;
+          
           // Success
           var userInfo = {
             username: username,
-			userId: null,
+			      userId: null,
             isAdmin: isAdmin
           };
 
@@ -136,7 +127,26 @@ module.exports = function Auth(database) {
 
   // Export the function to authenticate resource requests
   // store this in a session cookie
-  isAuthenticated = passport.authenticate('basic', { session: true });
-  isAdminAuthenticated = passport.authenticate('admin', { session: false });
+  this.isAuthenticated = function(req,res,next){
+    if(req.user) {
+       return next();
+    }
+    
+    return passport.authenticate('basic', { session: true })(req, res, next);
+  }
+
+  // Never allow admins to store cookies. They must request permission every request.
+  this.isAdminAuthenticated = function(req,res,next){
+    if(req.user) {
+       return next();
+    }
+    
+    return passport.authenticate('admin', { session: true })(req, res, next);
+  }
+
+  //this.isAuthenticated = passport.authenticate('basic', {session: true});
+  //this.isAdminAuthenticated = passport.authenticate('admin', { session: true});
+
+  // returns the scope as a constructed auth object
   return this;
 };

@@ -43,6 +43,9 @@ module.exports = function Router(database) {
   // CHIPS RESOURCE
   var chips = require('./controllers/Chips');
 
+  // CHIP MODELS RESOURCE
+  var chipModels = require('./controllers/ChipModels');
+
   // FOLDERS RESOURCE
   var folders = require('./controllers/Folders');
 
@@ -68,12 +71,20 @@ module.exports = function Router(database) {
   // Use the chips module as an endpoint
   router.route('/chips')
     .get(auth.isAuthenticated, chips.GetChipsList)
-    .post(auth.isAdminAuthenticated, chips.AddChip);
 
   router.route('/chips/:id')
     .get(auth.isAuthenticated, chips.GetChipByID)
-    .put(auth.isAdminAuthenticated, chips.UpdateChip)
-    .delete(auth.isAdminAuthenticated, chips.DeleteChip);
+
+  router.route('/chips/byModel/:id')
+    .get(auth.isAuthenticated, chips.GetChipsByModelID);
+
+  router.route('/chip-models/')
+    .post(auth.isAuthenticated, chipModels.AddChip);
+
+  router.route('/chip-models/:id')
+    .get(auth.isAuthenticated, chipModels.GetChipModelByID)
+    .put(auth.isAdminAuthenticated, chipModels.UpdateChipModel)
+    .delete(auth.isAdminAuthenticated, chipModels.DeleteChipModel);
 
   // Use the folders module as an endpoint
   router.route('/folders')
@@ -93,6 +104,19 @@ module.exports = function Router(database) {
   router.route('/public-folders/:id')
     .get(auth.isAuthenticated, publicFolders.GetPublicFolderByID)
     .delete(auth.isAdminAuthenticated, publicFolders.DeletePublicFolder);
+
+  router.get('/login', auth.isAuthenticated, function(req, res){
+    res.status(200).json({
+        status: 'Login successful!'
+    });
+  });
+  
+  router.get('/logout', function(req, res){
+    req.logout();
+    res.status(200).json({
+      status: 'Logout successful!'
+    });
+  });
 
   return router;
 };
