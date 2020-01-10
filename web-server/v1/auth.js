@@ -137,15 +137,12 @@ module.exports = function Auth(database) {
 
   // Never allow admins to store cookies. They must request permission every request.
   this.isAdminAuthenticated = function(req,res,next){
-    if(req.user) {
+    if(req.user && req.user.isAdmin) {
        return next();
     }
     
     return passport.authenticate('admin', { session: true })(req, res, next);
   }
-
-  //this.isAuthenticated = passport.authenticate('basic', {session: true});
-  //this.isAdminAuthenticated = passport.authenticate('admin', { session: true});
 
   // returns the scope as a constructed auth object
   return this;
