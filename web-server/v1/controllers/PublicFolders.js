@@ -13,7 +13,7 @@ PublicFoldersController.AddPublicFolder = function(req, res) {
 
   var PublicFolders = {
     name: req.body.name,
-    chips: req.body.chips || []
+    cards: req.body.cards || []
   };
 
   // Force name to fit 8 char limit
@@ -69,19 +69,16 @@ PublicFoldersController.DeletePublicFolder = function(req, res) {
   var query = BlogPostModel.findOne({_id: req.params.id});
 
   var promise = query.exec();
+  var name;
 
   promise.then(function(PublicFolders) {
-    var name = PublicFolders.name;
+    name = PublicFolders.name;
     var promiseRemove = PublicFolders.remove();
-    promiseRemove.exec();
-
-    promiseRemove.then(function(){
-      res.status(200).json({data: {message: "Public folder " + name + " removed"}});
-    },function(err){
-      res.status(500).json({error: err});
-    });
-  }, function(err) {
-      res.status(500).json({error: err});
+    return promiseRemove.exec();
+  }).then(function(){
+    res.status(200).json({data: {message: "Public folder " + name + " removed"}});
+  }).catch(function(err) {
+    res.status(500).json({error: err});
   });
 }
 

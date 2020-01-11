@@ -32,4 +32,4 @@ AdminUsers.pre('save', function(callback) {
 });
 
 // Export function to create AdminUsers model class
-module.exports = mongoose.model('adminUsers', AdminUsers);
+module.exports = mongoose.model('AdminUsers', AdminUsers);

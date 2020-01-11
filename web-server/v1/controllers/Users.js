@@ -2,7 +2,6 @@
 Users uses routes use to POST and GET resources from the Mongo DB
 */
 var UsersModel = require('./models/UsersModel');
-
 var UsersController = {};
 
 // POST API_IP/VERSION/users/
@@ -67,8 +66,7 @@ UsersController.GetUserByID = function(req, res) {
 // UpdateUser
 UsersController.UpdateUser = function(req, res) {
   if(!(req.user.isAdmin || req.params.id == req.user.userId)) {
-	res.status(401).json({error: "Not Authenticated"});
-	return;
+	  res.status(401).json({error: "Not Authenticated"});;
   }
 
   UsersModel.findById({_id: req.params.id}).then((user) => {
@@ -93,21 +91,17 @@ UsersController.UpdateUser = function(req, res) {
 // DeleteUser
 UsersController.DeleteUser = function(req, res) {
   var query = UsersModel.findOne({_id: req.params.id});
-
   var promise = query.exec();
-
+  var name;
+  
   promise.then(function(user) {
-    var name = user.username;
+    name = user.username;
     var promiseRemove = post.remove();
-    promiseRemove.exec();
-
-    promiseRemove.then(function(){
-      res.status(200).json({data: {message: "User " + name + " removed"}});
-    },function(err){
-      res.status(500).json({error: err});
-    });
-  }, function(err) {
-      res.status(500).json({error: err});
+    return promiseRemove.exec();
+  }).then(function(){
+    res.status(200).json({data: {message: "User " + name + " removed"}});
+  }).catch(function(err) {
+    res.status(500).json({error: err});
   });
 }
 

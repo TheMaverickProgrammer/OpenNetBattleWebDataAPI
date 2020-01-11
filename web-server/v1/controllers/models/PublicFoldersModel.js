@@ -4,9 +4,9 @@ var Schema = mongoose.Schema;
 
 var PublicFolders = Schema({
   name: {type: String, required: true},
-  chips: {type: Array, default: []},
+  cards: {type: Array, default: []},
   timestamp: {type: Date, default: Date.now},
 });
 
 // Export function to create Public Folders model class
-module.exports = mongoose.model('publicFolders', PublicFolders);
+module.exports = mongoose.model('PublicFolders', PublicFolders);

@@ -40,11 +40,11 @@ module.exports = function Router(database) {
   // ADMIN USERS RESOURCE
   var adminUsers = require('./controllers/AdminUsers');
 
-  // CHIPS RESOURCE
-  var chips = require('./controllers/Chips');
+  // CARDS RESOURCE
+  var cards = require('./controllers/Cards');
 
-  // CHIP MODELS RESOURCE
-  var chipModels = require('./controllers/ChipModels');
+  // CARD MODELS RESOURCE
+  var cardModels = require('./controllers/CardModels');
 
   // FOLDERS RESOURCE
   var folders = require('./controllers/Folders');
@@ -83,23 +83,23 @@ module.exports = function Router(database) {
     .put(auth.isAuthenticated, users.UpdateUser)
     .delete(auth.isAdminAuthenticated, users.DeleteUser);
 
-  // Use the chips module as an endpoint
-  router.route('/chips')
-    .get(auth.isAuthenticated, chips.GetChipsList)
+  // Use the cards module as an endpoint
+  router.route('/cards')
+    .get(auth.isAuthenticated, cards.GetCardList)
 
-  router.route('/chips/:id')
-    .get(auth.isAuthenticated, chips.GetChipByID)
+  router.route('/cards/:id')
+    .get(auth.isAuthenticated, cards.GetCardByID)
 
-  router.route('/chips/byModel/:id')
-    .get(auth.isAuthenticated, chips.GetChipsByModelID);
+  router.route('/cards/byModel/:id')
+    .get(auth.isAuthenticated, cards.GetCardsByModelID);
 
-  router.route('/chip-models/')
-    .post(auth.isAuthenticated, chipModels.AddChip);
+  router.route('/card-models/')
+    .post(auth.isAuthenticated, cardModels.AddCard);
 
-  router.route('/chip-models/:id')
-    .get(auth.isAuthenticated, chipModels.GetChipModelByID)
-    .put(auth.isAdminAuthenticated, chipModels.UpdateChipModel)
-    .delete(auth.isAdminAuthenticated, chipModels.DeleteChipModel);
+  router.route('/card-models/:id')
+    .get(auth.isAuthenticated, cardModels.GetCardModelByID)
+    .put(auth.isAdminAuthenticated, cardModels.UpdateCardModel)
+    .delete(auth.isAdminAuthenticated, cardModels.DeleteCardModel);
 
   // Use the folders module as an endpoint
   router.route('/folders')

@@ -17,7 +17,7 @@ FoldersController.AddFolder = function(req, res) {
   var Folders = {
     userId: userId,
     name: req.body.name,
-    chips: req.body.chips || []
+    cards: req.body.cards || []
   };
 
   // Force name to fit 8 char limit
@@ -58,7 +58,6 @@ FoldersController.GetFolderByID = function(req, res) {
   folderId = req.params.id;
 
   var query = FoldersModel.findOne({userId: req.user.userId, _id: folderId});
-
   var promise = query.exec();
 
   promise.then(function(Folders) {
@@ -73,27 +72,21 @@ FoldersController.GetFolderByID = function(req, res) {
 // UpdateFolder
 FoldersController.UpdateFolder = function(req, res) {
   var query = FoldersModel.findOne({userId: req.user.userId, _id: req.params.id});
-
   var promise = query.exec();
 
   promise.then(function(Folders) {
     if(Folders == null) {
       res.status(500).json({error: "No Folder with that ID to update"});
-      return;
     }
 
     Folders.name = req.body.name || Folders.name;
-    Folders.chips = req.body.description || Folders.chips;
+    Folders.cards = req.body.cards || Folders.cards;
+    return Folders.save();
 
-    var promiseSave = Folders.save();
-
-    promiseSave.then(function(Folders){
-      res.json({data: Folders});
-    },function(err){
-      res.status(500).json({err});
-    });
-  }, function(err) {
-      res.status(500).json({err});
+  }).then(function(Folders){
+    res.json({data: Folders});
+  }).catch(function(err) {
+    res.status(500).json({err});
   });
 }
 
@@ -104,18 +97,16 @@ FoldersController.DeleteFolder = function(req, res) {
   var query = FoldersModel.findOne({userId: req.user.userId, _id: req.params.id});
 
   var promise = query.exec();
+  var name;
 
   promise.then(function(Folders) {
-    var name = Folders.name;
+    name = Folders.name;
     var promiseRemove = Folders.remove();
-    promiseRemove.exec();
-    promiseRemove.then(function(){
-      res.status(200).json({data: {message: "Folder " + name + " removed"}});
-    },function(err){
-      res.status(500).json({error: err});
-    });
-  }, function(err) {
-      res.status(500).json({error: err});
+    return promiseRemove.exec();
+  }).then(function(){
+    res.status(200).json({data: {message: "Folder " + name + " removed"}});
+  }).catch(function(err) {
+    res.status(500).json({error: err});
   });
 }
 
