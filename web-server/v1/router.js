@@ -9,28 +9,6 @@ module.exports = function Router(database) {
 
   var router = require('express').Router();
 
-  // Require the passport module
-  var passport = require('passport');
-
-  // Require multi part form and storage modules
-  var multer = require('multer');
-
-  var storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      var settings = require('../server-settings');
-      var finalDest = settings.uploadDir;
-
-      console.log("Disc storage dest: " + finalDest);
-
-      cb(null, finalDest);
-    },
-    filename: function (req, file, cb) {
-      cb(null, Date.now() + "-" + file.originalname);
-    }
-  });
-
-  var upload = multer({ storage: storage});
-
   // Require the auth module
   var auth = require('./auth')(db);
 
@@ -85,7 +63,7 @@ module.exports = function Router(database) {
 
   // Use the cards module as an endpoint
   router.route('/cards')
-    .get(auth.isAuthenticated, cards.GetCardList)
+    .get(auth.isAuthenticated, cards.GetCardsList)
 
   router.route('/cards/:id')
     .get(auth.isAuthenticated, cards.GetCardByID)

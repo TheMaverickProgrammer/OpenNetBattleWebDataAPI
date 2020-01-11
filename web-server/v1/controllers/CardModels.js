@@ -85,7 +85,7 @@ CardModelsController.GetCardModelByID = function(req, res) {
 // PUT API_IP/VERSION/card-models/:id
 // Update a Card Model
 // UpdateCardModel
-CardModelsController.UpdateCardModel = async function(req, res) {
+CardModelsController.UpdateCardModel = function(req, res) {
   var query = CardModelsModel.findOne({_id: req.params.id});
 
   var promise = query.exec();
@@ -125,7 +125,7 @@ CardModelsController.UpdateCardModel = async function(req, res) {
     var modelId = CardModelModel._id;
     var CardsQuery = CardsModel.find({modelId: modelId});
     return CardsQuery.exec();
-  }).then((Cards) => {
+  }).then(async (Cards) => {
     var i = 0;
     for(i = 0; i < countMax; i++) {
       if(i < Cards.size()) {
@@ -139,7 +139,7 @@ CardModelsController.UpdateCardModel = async function(req, res) {
     count = i;
   }).catch((err) => {
     res.status(500).json({error: err});
-  }).finally(() => {
+  }).finally(async () => {
     // If we have more codes than we did before the update
     // we need to create new Cards
     if(count < countMax) {
