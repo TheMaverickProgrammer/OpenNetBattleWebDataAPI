@@ -87,11 +87,14 @@ CardModelsController.GetCardModelByID = function(req, res) {
 // UpdateCardModel
 CardModelsController.UpdateCardModel = function(req, res) {
   var query = CardModelsModel.findOne({_id: req.params.id});
-
   var promise = query.exec();
 
   var count = 0;
   var countMax = 0;
+  var codes = [];
+  var modelId;
+  var all_completed_successfully = false;
+  var newCardModel;
 
   promise.then((CardModelModel) => {
     if(CardModelModel == null) {
@@ -100,7 +103,7 @@ CardModelsController.UpdateCardModel = function(req, res) {
     }
 
     // Update our max before updates
-    countMax = CardModelsModel.codes.size();
+    countMax = CardModelModel.codes.length;
 
     CardModelModel.name = req.body.name || CardModelModel.name;
     CardModelModel.description = req.body.description || CardModelModel.description;
@@ -120,31 +123,56 @@ CardModelsController.UpdateCardModel = function(req, res) {
     if(typeof CardModelModel.verboseDescription !== 'undefined') 
     CardModelModel.verboseDescription = CardModelModel.verboseDescription.substring(0, 300);
 
+    console.log("saving changes");
+
     return CardModelModel.save();
   }).then((CardModelModel) => {
-    var modelId = CardModelModel._id;
+    console.log("looking for cards...");
+
+    newCardModel = CardModelModel;
+    modelId = CardModelModel._id;
+    codes = CardModelModel.codes;
     var CardsQuery = CardsModel.find({modelId: modelId});
     return CardsQuery.exec();
-  }).then(async (Cards) => {
+  }).then((Cards, reject) => {
+    console.log("found " + Cards.length + " cards!");
     var i = 0;
-    for(i = 0; i < countMax; i++) {
-      if(i < Cards.size()) {
-        // update it
-        Card.code = CardModelModel.codes[i] || Card.code;
-        await Card.save().exec();
-      } else {
-        await Card.remove().exec(); // we need to get rid of it now it is not fitting
-      }
+
+    try{
+      Cards.map((card) => {
+        return (
+          /*
+            Needed to capture var `i` in a closure in order to track the count of all successful items
+          */
+          async function(i) {
+            if(i < countMax) {
+              // update it
+              card.code = codes[i] || card.code;
+              await CardsModel(card).save();
+            } else {
+              await CardsModel.findById({_id: card._id}).deleteOne().exec(); // we need to get rid of it now it is not fitting
+            }
+          }
+        )(i++);
+      });
+      
+      count = i;
+      all_completed_successfully = true;
+    } catch (e) {
+      reject(e);
     }
-    count = i;
   }).catch((err) => {
     res.status(500).json({error: err});
   }).finally(async () => {
-    // If we have more codes than we did before the update
-    // we need to create new Cards
-    if(count < countMax) {
-      var remainingCodes = CardModelModel.codes.slice(count, countMax);
-      await makeCards(CardMode._id, remainingCodes);
+    if(all_completed_successfully) {
+      // If we have more codes than we did before the update
+      // we need to create new Cards
+      if(count < countMax) {
+        var remainingCodes = codes.slice(count, countMax);
+        await makeCards(modelId, remainingCodes);
+      }
+
+      res.json({data: newCardModel});
     }
   });
 }
@@ -162,7 +190,7 @@ CardModelsController.DeleteCardModel = function(req, res) {
   }).then(function(post) {
     var modelId = post._id;
     var CardsQuery = CardsModel.find({modelId: modelId});
-    var promiseCardsRemove = CardsQuery.remove();
+    var promiseCardsRemove = CardsQuery.deleteOne();
     return promiseCardsRemove.exec();
   }).then(() => {
     res.status(200).json({data: {message: "CardModel and all Card data removed"}});

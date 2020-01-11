@@ -37,7 +37,6 @@ PublicFoldersController.AddPublicFolder = function(req, res) {
 // GetPublicFoldersList
 PublicFoldersController.GetPublicFoldersList = function(req, res) {  
   var query = PublicFoldersModel.find();
-
   var promise = query.exec();
 
   promise.then(function(PublicFolders) {
@@ -52,7 +51,6 @@ PublicFoldersController.GetPublicFoldersList = function(req, res) {
 // GetPublicFolderByID
 PublicFoldersController.GetPublicFolderByID = function(req, res) {
   var query = PublicFoldersModel.findOne({_id: req.params.id});
-
   var promise = query.exec();
 
   promise.then(function(PublicFolders) {
@@ -73,7 +71,7 @@ PublicFoldersController.DeletePublicFolder = function(req, res) {
 
   promise.then(function(PublicFolders) {
     name = PublicFolders.name;
-    var promiseRemove = PublicFolders.remove();
+    var promiseRemove = PublicFolders.deleOne();
     return promiseRemove.exec();
   }).then(function(){
     res.status(200).json({data: {message: "Public folder " + name + " removed"}});

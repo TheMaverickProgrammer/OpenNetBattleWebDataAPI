@@ -93,10 +93,10 @@ UsersController.DeleteUser = function(req, res) {
   var query = UsersModel.findOne({_id: req.params.id});
   var promise = query.exec();
   var name;
-  
+
   promise.then(function(user) {
     name = user.username;
-    var promiseRemove = post.remove();
+    var promiseRemove = post.deleteOne();
     return promiseRemove.exec();
   }).then(function(){
     res.status(200).json({data: {message: "User " + name + " removed"}});

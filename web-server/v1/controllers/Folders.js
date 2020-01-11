@@ -26,7 +26,6 @@ FoldersController.AddFolder = function(req, res) {
 
   // Execute a query
   var model = new FoldersModel(Folders);
-
   var promise = model.save();
 
   promise.then(function(Folders) {
@@ -41,7 +40,6 @@ FoldersController.AddFolder = function(req, res) {
 // GetFoldersList
 FoldersController.GetFoldersList = function(req, res) {  
   var query = FoldersModel.find({userId: req.user.userId});
-
   var promise = query.exec();
 
   promise.then(function(Folders) {
@@ -101,7 +99,7 @@ FoldersController.DeleteFolder = function(req, res) {
 
   promise.then(function(Folders) {
     name = Folders.name;
-    var promiseRemove = Folders.remove();
+    var promiseRemove = Folders.deleOne();
     return promiseRemove.exec();
   }).then(function(){
     res.status(200).json({data: {message: "Folder " + name + " removed"}});
