@@ -4,7 +4,7 @@ var Schema = mongoose.Schema;
 
 var Folders = Schema({
   userId: {type: Schema.Types.ObjectId, required: true},
-  name: {type: String, required: true},
+  name: { type: String, required: true },
   cards: {type: Array, default: []},
   timestamp: {type: Date, default: Date.now}
 });

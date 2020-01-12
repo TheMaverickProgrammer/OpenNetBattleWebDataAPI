@@ -3,7 +3,7 @@ mongoose.Promise = global.Promise;
 var Schema = mongoose.Schema;
 
 var PublicFolders = Schema({
-  name: {type: String, required: true},
+  name: {type: String, required: true, unique: true},
   cards: {type: Array, default: []},
   timestamp: {type: Date, default: Date.now},
 });

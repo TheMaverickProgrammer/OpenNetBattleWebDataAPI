@@ -49,7 +49,7 @@ module.exports = function Router(database) {
 
   // Use this endpoint to create admins remotely
   router.route('/admin')
-    .post(adminUsers.AddAdminUser);
+    .post(auth.isAdminAuthenticated, adminUsers.AddAdminUser);
 
   // Use the users module as an endpoint
   router.route('/users')

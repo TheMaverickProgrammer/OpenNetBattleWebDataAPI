@@ -63,22 +63,38 @@ module.exports = function Auth(database) {
     var promise = query.exec();
 
     promise.then(function(user) {
-      if(!user) {
+      if(user == null) {
         var query = AdminUsersModel.findOne({username: username});
         var promise = query.exec();
     
         promise.then(function(user) {
           if(user){
-            user.isAdmin = true;
-            done(null, user);
+            /*
+            Mongoose objects do not let us
+            modify properties.
+            Create a new object that
+            we can modify*/
+            var requestUser = {
+              userId: user._id,
+              isAdmin: true,
+              username: user.username
+            };
+            
+            done(null, requestUser);
           } else {
             done({error: "Not found or passwords did not match"}, false);
           }
         }, function(err) {
           done(err, false);
         });
-      }else {
-        done(null, user);
+      } else {
+        var requestUser = {
+          userId: user._id,
+          isAdmin: false,
+          username: user.username
+        };
+        
+        done(null, requestUser);
       }
     }, function(err) {
       done(err, false);

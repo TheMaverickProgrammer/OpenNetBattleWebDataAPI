@@ -5,14 +5,25 @@ var FoldersModel = require('./models/FoldersModel');
 
 var FoldersController = {};
 
+validateUserFolderName = async function (userId, foldername) {
+  var result = false;
+  var p = FoldersModel.findOne({userId: userId, name: foldername}).exec();
+  await p.then((Folder) => {
+    if(Folder == null) {
+      result = true;
+    }
+  });
+  return result;
+}
+
 // POST API_IP/VERSION/Folders/
 // Create a NEW Folder
 // AddFolder
-FoldersController.AddFolder = function(req, res) {
-  var db = req.database;
-
+FoldersController.AddFolder = async function(req, res) {
   // Users can only create Folders for their own account
   var userId = req.user.userId;
+
+  console.log("usr: " + JSON.stringify(req.user.userId));
 
   var Folders = {
     userId: userId,
@@ -21,8 +32,13 @@ FoldersController.AddFolder = function(req, res) {
   };
 
   // Force name to fit 8 char limit
-  if(typeof Folders.name !== 'undefined')
+  if(Folders.name.length > 8) {
     Folders.name = Folders.name.substring(0, 8);
+  }
+
+  if(await validateUserFolderName(userId, Folders.name) == false) {
+    return res.status(500).json({error: "You already have a folder with the same name"});
+  }
 
   // Execute a query
   var model = new FoldersModel(Folders);
@@ -76,19 +92,25 @@ FoldersController.UpdateFolder = function(req, res) {
   var query = FoldersModel.findOne({userId: req.user.userId, _id: req.params.id});
   var promise = query.exec();
 
-  promise.then(function(Folders) {
+  promise.then(async function(Folders) {    
     if(Folders == null) {
       throw "No Folder with that ID to update";
     }
 
     Folders.name = req.body.name || Folders.name;
     Folders.cards = req.body.cards || Folders.cards;
+
+    if(await validateUserFolderName(req.user.userId, Folders.name) == false) {
+      throw "You already have a folder with the same name";
+    }
+
     return Folders.save();
 
   }).then(function(Folders){
     res.json({data: Folders});
   }).catch(function(err) {
-    res.status(500).json({err});
+    console.log("error: " + err);
+    res.status(500).json({error: err});
   });
 }
 
