@@ -2,6 +2,7 @@
 Folders uses routes use to Folders and GET resources from the Mongo DB
 */
 var FoldersModel = require('./models/FoldersModel');
+var settings = require('../../server-settings');
 
 var FoldersController = {};
 
@@ -23,17 +24,15 @@ FoldersController.AddFolder = async function(req, res) {
   // Users can only create Folders for their own account
   var userId = req.user.userId;
 
-  console.log("usr: " + JSON.stringify(req.user.userId));
-
   var Folders = {
     userId: userId,
     name: req.body.name,
     cards: req.body.cards || []
   };
 
-  // Force name to fit 8 char limit
-  if(Folders.name.length > 8) {
-    Folders.name = Folders.name.substring(0, 8);
+  // Force name to fit char limit
+  if(Folders.name.length > settings.preferences.maxFolderNameLength) {
+    Folders.name = Folders.name.substring(0, settings.preferences.maxFolderNameLength);
   }
 
   if(await validateUserFolderName(userId, Folders.name) == false) {
@@ -97,11 +96,20 @@ FoldersController.UpdateFolder = function(req, res) {
       throw "No Folder with that ID to update";
     }
 
+    var nameBefore = Folders.name;
+
     Folders.name = req.body.name || Folders.name;
     Folders.cards = req.body.cards || Folders.cards;
 
-    if(await validateUserFolderName(req.user.userId, Folders.name) == false) {
-      throw "You already have a folder with the same name";
+    // Force name to fit char limit
+    if(Folders.name.length > settings.preferences.maxFolderNameLength) {
+      Folders.name = Folders.name.substring(0, settings.preferences.maxFolderNameLength);
+    }
+
+    if(Folders.name != nameBefore) {
+      if(await validateUserFolderName(req.user.userId, Folders.name) == false) {
+        throw "You already have a folder with the same name";
+      }
     }
 
     return Folders.save();

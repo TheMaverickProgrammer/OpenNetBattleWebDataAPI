@@ -3,6 +3,7 @@ CardModels uses routes use to POST and GET resources from the Mongo DB
 */
 var CardModelsModel = require('./models/CardModelsModel');
 var CardsModel = require('./models/CardsModel');
+var settings = require('../../server-settings');
 
 var CardModelsController = {};
 
@@ -24,8 +25,6 @@ function makeCards(id,codes) {
 // Create a NEW Card
 // AddCard
 CardModelsController.AddCard = function(req, res) {
-  var db = req.database;
-
   var CardModel = {
     name: req.body.name,
     description: req.body.description,
@@ -38,13 +37,16 @@ CardModelsController.AddCard = function(req, res) {
     icon: req.body.icon
   };
 
-  // Force description to fit 30 char limit
-  if(typeof CardModel.description !== 'undefined')
-  CardModel.description = CardModel.description.substring(0, 30);
+  // Force card name to fit char limit
+  CardModelModel.name = CardModelModel.name.substring(0, settings.preferences.maxCardNameLength);
 
-  // Force verboseDescription to fit a 300 char limit
+  // Force description to fit char limit
+  if(typeof CardModel.description !== 'undefined')
+  CardModel.description = CardModel.description.substring(0, settings.preferences.maxDescriptionLength);
+
+  // Force verboseDescription to fit char limit
   if(typeof CardModel.verboseDescription !== 'undefined') 
-    CardModel.verboseDescription = CardModel.verboseDescription.substring(0, 300);
+    CardModel.verboseDescription = CardModel.verboseDescription.substring(0, settings.preferences.maxVerboseDescriptionLength);
 
   // Execute a query
   // Yes it's a mongoose model of a Card model
@@ -111,13 +113,16 @@ CardModelsController.UpdateCardModel = function(req, res) {
     // Update our new max
     countMax = CardModelModel.codes.length;
 
-    // Force description to fit 30 char limit
-    if(typeof CardModelModel.description !== 'undefined')
-    CardModelModel.description = CardModelModel.description.substring(0, 30);
+    // Force card name to fit char limit
+    CardModelModel.name = CardModelModel.name.substring(0, settings.preferences.maxCardNameLength);
 
-    // Force verboseDescription to fit a 300 char limit
+    // Force description to fit char limit
+    if(typeof CardModelModel.description !== 'undefined')
+    CardModelModel.description = CardModelModel.description.substring(0, settings.preferences.maxDescriptionLength);
+
+    // Force verboseDescription to fit char limit
     if(typeof CardModelModel.verboseDescription !== 'undefined') 
-    CardModelModel.verboseDescription = CardModelModel.verboseDescription.substring(0, 300);
+    CardModelModel.verboseDescription = CardModelModel.verboseDescription.substring(0, settings.preferences.maxVerboseDescriptionLength);
     return CardModelModel.save();
 
   }).then((CardModelModel) => {

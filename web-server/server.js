@@ -57,13 +57,13 @@ CONFIGURE THE DATABASE
 var mongooseConnection = mongoose.createConnection();
 
 // Connect to mongo
-var url = settings.url,
-    port = settings.port,
-    database = settings.database,
-    user = settings.user,
-    pass = settings.password;
+var url = settings.database.url,
+    port = settings.database.port,
+    collection = settings.database.collection,
+    user = settings.database.user,
+    pass = settings.database.password;
 
-var connectString = 'mongodb://'+user+":"+pass+"@"+url+':'+port+'/'+database+"?authSource=admin";
+var connectString = 'mongodb://'+user+":"+pass+"@"+url+':'+port+'/'+collection+"?authSource=admin";
 mongoose.set('useCreateIndex', true);
 mongoose.connect(connectString, { useNewUrlParser: true, useUnifiedTopology: true} );
 
@@ -99,8 +99,8 @@ app.use(function(req, res, next) {
 // Create an express session cookie to use with passport
 app.use(session({  
   store: new MongoStore({ url: connectString } ),
-  name: 'OpenBattleNetworkCookie',
-  secret: 'OpenBattleNetworkSessionSecret',
+  name: settings.server.name + 'Cookie',
+  secret: settings.server.name + 'SessionSecret',
   resave: false,
   saveUninitialized: true,
   cookie: { httpOnly: true, maxAge : 3600000 } //1 Hour
@@ -142,7 +142,7 @@ app.use(function(req, res, next) {
 CONFIG SERVER
 *******************************************/
 // Use environment defined port or 3000
-var port = process.env.PORT || 3000;
+var port = process.env.PORT || settings.server.port || 3000;
 
 var cleanup = function() {
     db.close();
@@ -200,7 +200,7 @@ START THE SERVER
 ******************************************/
 app.listen(port);
 
-console.log('OpenNetBattle API is listening on'
+console.log(settings.server.name + ' is listening on'
 + ' port ' + port + '...');
 
 module.exports = app;

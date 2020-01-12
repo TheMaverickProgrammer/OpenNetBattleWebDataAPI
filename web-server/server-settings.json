@@ -1,8 +1,19 @@
 {
-  "dbType": "mongo",
-  "url": "localhost",
-  "user": "mongoAdmin",
-  "password": "sign into mongo database",
-  "port": "27017",
-  "database": "local"
+  "database": {
+	  "url": "localhost",
+	  "user": "mongoAdmin",
+	  "password": "sign into mongo database",
+	  "port": "27017",
+	  "collection": "local" 
+  },
+  "server": {
+	"name": "Open Net Battle Data API",
+	"port": 3000
+  },
+  "preferences": {
+	  "maxFolderNameLength": 8,
+	  "maxCardNameLength": 8,
+	  "maxDescriptionLength": 30,
+	  "maxVerboseDescriptionLength": 300
+  }
 }
