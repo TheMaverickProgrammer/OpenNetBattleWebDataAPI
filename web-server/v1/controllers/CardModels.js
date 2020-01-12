@@ -38,7 +38,7 @@ CardModelsController.AddCard = function(req, res) {
   };
 
   // Force card name to fit char limit
-  CardModelModel.name = CardModelModel.name.substring(0, settings.preferences.maxCardNameLength);
+  CardModel.name = CardModel.name.substring(0, settings.preferences.maxCardNameLength);
 
   // Force description to fit char limit
   if(typeof CardModel.description !== 'undefined')
@@ -95,40 +95,42 @@ CardModelsController.UpdateCardModel = function(req, res) {
   var all_completed_successfully = false;
   var newCardModel;
 
-  promise.then((CardModelModel) => {
-    if(CardModelModel == null) {
+  promise.then((CardModel) => {
+    if(CardModel == null) {
       throw "No CardModel with that ID to update";
     }
 
-    CardModelModel.name = req.body.name || CardModelModel.name;
-    CardModelModel.description = req.body.description || CardModelModel.description;
-    CardModelModel.verboseDescription = req.body.verboseDescription || CardModelModel.verboseDescription;
-    CardModelModel.codes = req.body.codes || CardModelModel.codes;
-    CardModelModel.damage = req.body.damage || CardModelModel.damage;
-    CardModelModel.element = req.body.element || CardModelModel.element;
-    CardModelModel.secondaryElement = req.body.secondaryElement || CardModelModel.secondaryElement;
-    CardModelModel.image = req.body.image || CardModelModel.image;
-    CardModelModel.icon = req.body.icon || CardModelModel.icon;
+    CardModel.name = req.body.name || CardModel.name;
+    CardModel.description = req.body.description || CardModel.description;
+    CardModel.verboseDescription = req.body.verboseDescription || CardModel.verboseDescription;
+    CardModel.codes = req.body.codes || CardModel.codes;
+    CardModel.damage = req.body.damage || CardModel.damage;
+    CardModel.element = req.body.element || CardModel.element;
+    CardModel.secondaryElement = req.body.secondaryElement || CardModel.secondaryElement;
+    CardModel.image = req.body.image || CardModel.image;
+    CardModel.icon = req.body.icon || CardModel.icon;
 
     // Update our new max
-    countMax = CardModelModel.codes.length;
+    countMax = CardModel.codes.length;
 
     // Force card name to fit char limit
-    CardModelModel.name = CardModelModel.name.substring(0, settings.preferences.maxCardNameLength);
+    CardModel.name = CardModel.name.substring(0, settings.preferences.maxCardNameLength);
 
     // Force description to fit char limit
-    if(typeof CardModelModel.description !== 'undefined')
-    CardModelModel.description = CardModelModel.description.substring(0, settings.preferences.maxDescriptionLength);
+    if(typeof CardModel.description !== 'undefined')
+    CardModel.description = CardModel.description.substring(0, settings.preferences.maxDescriptionLength);
 
     // Force verboseDescription to fit char limit
-    if(typeof CardModelModel.verboseDescription !== 'undefined') 
-    CardModelModel.verboseDescription = CardModelModel.verboseDescription.substring(0, settings.preferences.maxVerboseDescriptionLength);
-    return CardModelModel.save();
+    if(typeof CardModel.verboseDescription !== 'undefined') 
+    CardModel.verboseDescription = CardModel.verboseDescription.substring(0, settings.preferences.maxVerboseDescriptionLength);
+    return CardModel.save();
 
-  }).then((CardModelModel) => {
-    newCardModel = CardModelModel;
-    modelId = CardModelModel._id;
-    codes = CardModelModel.codes;
+  }).then((CardModel) => {
+    newCardModel = CardModel;
+    modelId = CardModel._id;
+    codes = CardModel.codes;
+
+    // Things is looking through the Cards table
     var CardsQuery = CardsModel.find({modelId: modelId});
     return CardsQuery.exec();
     

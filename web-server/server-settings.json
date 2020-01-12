@@ -8,7 +8,7 @@
   },
   "server": {
 	"name": "Open Net Battle Data API",
-	"port": 3000
+	"port": 999
   },
   "preferences": {
 	  "maxFolderNameLength": 8,
