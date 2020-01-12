@@ -122,22 +122,17 @@ CardModelsController.UpdateCardModel = function(req, res) {
     // Force verboseDescription to fit a 300 char limit
     if(typeof CardModelModel.verboseDescription !== 'undefined') 
     CardModelModel.verboseDescription = CardModelModel.verboseDescription.substring(0, 300);
-
-    console.log("saving changes");
-
     return CardModelModel.save();
-  }).then((CardModelModel) => {
-    console.log("looking for cards...");
 
+  }).then((CardModelModel) => {
     newCardModel = CardModelModel;
     modelId = CardModelModel._id;
     codes = CardModelModel.codes;
     var CardsQuery = CardsModel.find({modelId: modelId});
     return CardsQuery.exec();
+    
   }).then((Cards, reject) => {
-    console.log("found " + Cards.length + " cards!");
     var i = 0;
-
     try{
       Cards.map((card) => {
         return (
@@ -182,17 +177,19 @@ CardModelsController.UpdateCardModel = function(req, res) {
 // DeleteCardModel
 CardModelsController.DeleteCardModel = function(req, res) {
   var query = CardModelsModel.findOne({_id: req.params.id});
-  var promise = query.exec();
+  
+  query.exec().then(function(post) {
+    if(post == null) {
+      res.status(500).json({error: "No CardModel with that ID to delete"});
+    }
 
-  promise.then(function(post) {
-    var promiseCardModelRemove = post.remove();
-    return promiseCardModelRemove.exec();
+    return post.deleteOne().exec();
   }).then(function(post) {
     var modelId = post._id;
-    var CardsQuery = CardsModel.find({modelId: modelId});
-    var promiseCardsRemove = CardsQuery.deleteOne();
-    return promiseCardsRemove.exec();
-  }).then(() => {
+
+    // Don't really care if individual cards fail or not. 
+    // We can clean them up manually with their DELETE API call...
+    CardsModel.find({modelId: modelId}).exec().then((Cards) => Cards.map((Card) => { Card.deleteOne(); }));
     res.status(200).json({data: {message: "CardModel and all Card data removed"}});
   }).catch((err) => {
     res.status(500).json({error: err});

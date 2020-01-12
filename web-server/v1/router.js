@@ -63,10 +63,11 @@ module.exports = function Router(database) {
 
   // Use the cards module as an endpoint
   router.route('/cards')
-    .get(auth.isAuthenticated, cards.GetCardsList)
+    .get(auth.isAuthenticated, cards.GetCardsList);
 
   router.route('/cards/:id')
     .get(auth.isAuthenticated, cards.GetCardByID)
+    .delete(auth.isAdminAuthenticated, cards.DeleteCard); // only admin delete cards
 
   router.route('/cards/byModel/:id')
     .get(auth.isAuthenticated, cards.GetCardsByModelID);

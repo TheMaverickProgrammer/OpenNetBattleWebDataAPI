@@ -125,7 +125,7 @@ void help() {
 
   table.add_row({ "view", "list all entries. If ID is given, list the contents of that ID.", "view users 19" });
   table.add_row({ "delete", "ID required. Permanently deletes a resource", "delete folder 143" });
-  table.add_row({ "add", "adds an entry to a resource", "add chip ..." });
+  table.add_row({ "add", "adds an entry to a resource", "add card ..." });
   table.add_row({ "update", "ID required. Permanently alters a resource", "update folder 143 ..." });
   table.add_row({ "login", "Prompts for account username, pass, and then saves the auth", "login" });
   table.add_row({ "quit", "Exits and any login information is lost", "quit" });
@@ -142,7 +142,7 @@ void showResources() {
   table.add_row({ "users", "account information" });
   table.add_row({ "folders", "If signed in as a user, accesses folders for that account" });
   table.add_row({ "public-folders", "accesses publically available folders that\nusers can import to their account" });
-  table.add_row({ "chips", "chip information" });
+  table.add_row({ "cards", "card information" });
   table.add_row({ "admin", "Only admin can create other admins" });
 
   std::cout << table << std::endl;
@@ -185,7 +185,7 @@ const char* getElementUnicode(const char* str) {
   return utf8("-");
 }
 
-void displayChipsResource(const Json::Value& data, bool detail = false) {
+void displayCardssResource(const Json::Value& data, bool detail = false) {
   tabulate::Table table;
 
   if (detail) {
@@ -223,7 +223,7 @@ void displayChipsResource(const Json::Value& data, bool detail = false) {
   std::cout << table << std::endl;
 }
 
-void displayChipsModelResource(const Json::Value& data) {
+void displayCardModelsResource(const Json::Value& data) {
   tabulate::Table table;
 
   auto& f = table.add_row({ "codes", "model ID", "name", "damage", "element", "image", "timestamp" }).format();
@@ -259,7 +259,7 @@ void handlePostRequest(httplib::Client& client, std::vector<std::string>& input)
   std::string resource = input[0];
 
   if (!(
-    matches(resource, "chips")
+    matches(resource, "cards")
     || matches(resource, "users")
     || matches(resource, "folders")
     || matches(resource, "public-folders")
@@ -352,8 +352,8 @@ void handlePostRequest(httplib::Client& client, std::vector<std::string>& input)
 
     std::cout << "..." << results << std::endl;
 
-    if (resource == "chips") {
-      displayChipsResource(arr, input.size() != 1);
+    if (resource == "cards") {
+      displayCardsResource(arr, input.size() != 1);
     }
   }
   else {
@@ -367,7 +367,7 @@ void handlePutRequest(httplib::Client& client, std::vector<std::string>& input) 
   std::string resource = input[0];
 
   if (!(
-    matches(resource, "chips")
+    matches(resource, "cards")
     || matches(resource, "users")
     || matches(resource, "folders")
     || matches(resource, "public-folders")
@@ -469,8 +469,8 @@ void handlePutRequest(httplib::Client& client, std::vector<std::string>& input) 
 
     std::cout << "..." << results << std::endl;
 
-    if (resource == "chips") {
-      displayChipsModelResource(arr);
+    if (resource == "cards") {
+      displayCardModelsResource(arr);
     }
   }
   else {
@@ -484,7 +484,7 @@ void handleDeleteRequest(httplib::Client& client, std::vector<std::string>& inpu
   std::string resource = input[0];
 
   if (!(
-    matches(resource, "chips")
+    matches(resource, "cards")
     || matches(resource, "users")
     || matches(resource, "folders")
     || matches(resource, "public-folders")
@@ -568,8 +568,8 @@ void handleDeleteRequest(httplib::Client& client, std::vector<std::string>& inpu
 
     std::cout << "..." << results << std::endl;
 
-    if (resource == "chips") {
-      displayChipsResource(arr, input.size() != 1);
+    if (resource == "cards") {
+      displayCardsResource(arr, input.size() != 1);
     }
   }
   else {
@@ -583,7 +583,7 @@ void handleViewRequest(httplib::Client& client, std::vector<std::string>& input)
   std::string resource = input[0];
 
   if (!( 
-    matches(resource, "chips") 
+    matches(resource, "cards") 
     || matches(resource, "users")
     || matches(resource, "folders")
     || matches(resource, "public-folders")
@@ -640,8 +640,8 @@ void handleViewRequest(httplib::Client& client, std::vector<std::string>& input)
 
     std::cout << "..." << results << std::endl;
 
-    if (resource == "chips") {
-      displayChipsResource(arr, input.size() != 1);
+    if (resource == "cards") {
+      displayCardsResource(arr, input.size() != 1);
     }
   }
   else {

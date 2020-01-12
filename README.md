@@ -1,11 +1,11 @@
-# battlenetwork-web-api
-Web api for the open battlenetwork project [>> here <<](https://github.com/TheMaverickProgrammer/battlenetwork)
+# Open Net Battle Data API
+Web api for the open net battle project [>> here <<](https://github.com/TheMaverickProgrammer/OpenNetBattle)
 
 There will not be a tutorial beyond this README. The web api is not intended to be expanded upon but to help mobile users organize their folders
 and share optimal folders with eachother.
 
 # docs
-View the public documentation hosted by postman [>> here <<](https://documenter.getpostman.com/view/9873403/SWLYAWAU?version=latest)
+View the public documentation hosted by postman [>> here <<](https://documenter.getpostman.com/view/9873403/SWLYAWAU)
 
 # requirements
 A mongo DB server for the data store
@@ -30,7 +30,7 @@ As of now, only the database settings can be configured
   "user": "mongoAdmin",
   "password": "enter your password here",
   "port": "27017",
-  "collection": "my_battlenetwork_collection"
+  "collection": "my_database_name"
 }
 ```
 
