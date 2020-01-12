@@ -4,10 +4,10 @@ var Schema = mongoose.Schema;
 
 var Folders = Schema({
   userId: {type: Schema.Types.ObjectId, required: true},
-  name: {type: String, required: true},
-  chips: {type: Array, default: []},
+  name: { type: String, required: true },
+  cards: {type: Array, default: []},
   timestamp: {type: Date, default: Date.now}
 });
 
 // Export function to create Folders model class
-module.exports = mongoose.model('folders', Folders);
+module.exports = mongoose.model('Folders', Folders);

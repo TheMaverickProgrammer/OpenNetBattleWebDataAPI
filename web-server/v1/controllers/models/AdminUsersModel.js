@@ -3,7 +3,6 @@ mongoose.Promise = global.Promise;
 var Schema = mongoose.Schema;
 
 var AdminUsers = Schema({
-  isAdmin: {type: Boolean, required: true, default: true}, // used in requests
   username: {type: String, required: true, unique: true},  //! Limit to 60 characters
   password: {type: String, required: true},
   email: {type: String, default: null, unique: true},  //  email if provided
@@ -33,4 +32,4 @@ AdminUsers.pre('save', function(callback) {
 });
 
 // Export function to create AdminUsers model class
-module.exports = mongoose.model('adminUsers', AdminUsers);
+module.exports = mongoose.model('AdminUsers', AdminUsers);

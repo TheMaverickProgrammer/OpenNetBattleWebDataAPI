@@ -2,15 +2,12 @@
 Users uses routes use to POST and GET resources from the Mongo DB
 */
 var UsersModel = require('./models/UsersModel');
-
 var UsersController = {};
 
 // POST API_IP/VERSION/users/
 // Create a NEW User
 // AddUser
 UsersController.AddUser = function(req, res) {
-  var db = req.database;
-
   var user = {
     username: req.body.username,
     twitter: req.body.twitter || "",
@@ -51,13 +48,13 @@ UsersController.GetUsersList = function(req, res) {
 // Get a single User
 // GetUserByID
 UsersController.GetUserByID = function(req, res) {
-  var query = UsersModel.findOne({_id: req.params.id});
+  var query = UsersModel.findById(req.params.id);
 
   var promise = query.exec();
 
   promise.then(function(user) {
     res.json({data: user});
-  }, function(err) {
+  }).catch((err) => {
     res.status(500).json({error: err});
   });
 }
@@ -67,20 +64,21 @@ UsersController.GetUserByID = function(req, res) {
 // UpdateUser
 UsersController.UpdateUser = function(req, res) {
   if(!(req.user.isAdmin || req.params.id == req.user.userId)) {
-	res.status(401).json({error: "Not Authenticated"});
-	return;
+	  res.status(401).json({error: "Not Authenticated"});;
   }
 
-  UsersModel.findById({_id: req.params.id}).then((user) => {
-      user.username = req.body.publicName || user.username;
-      user.twitter  = req.body.twitterUrl || user.twitter;
-      user.password = req.body.password || user.password;
-      user.email    = req.body.email || user.email;
-      return user;
-  }).then((user) => {
-      return user.save();
+  UsersModel.findById(req.params.id).then((user) => {
+    if(user == null) {
+      throw "User not found with that ID";
+    }
+
+    user.username = req.body.publicName || user.username;
+    user.twitter  = req.body.twitterUrl || user.twitter;
+    user.password = req.body.password || user.password;
+    user.email    = req.body.email || user.email;
+    return user.save();
   }).then((updatedModel) => {
-      res.json({
+      res.status(200).json({
           data: updatedModel
       });
   }).catch((err) => {
@@ -92,21 +90,19 @@ UsersController.UpdateUser = function(req, res) {
 // Delete a user permanently
 // DeleteUser
 UsersController.DeleteUser = function(req, res) {
-  var query = UsersModel.findOne({_id: req.params.id});
+  var query = UsersModel.findById(req.params.id).exec();
+  var name;
 
-  var promise = query.exec();
-
-  promise.then(function(user) {
-    var name = user.username;
-    var promiseRemove = post.remove();
-
-    promiseRemove.then(function(){
-      res.status(200).json({data: {message: "User " + name + " removed"}});
-    },function(err){
-      res.status(500).json({error: err});
-    });
-  }, function(err) {
-      res.status(500).json({error: err});
+  query.then(function(user) {
+    if(user !== null) {
+      name = user.username;
+      return user.deleteOne();
+    }
+    throw "User not found with that ID";
+  }).then(function(){
+    res.status(200).json({data: {message: "User " + name + " removed"}});
+  }).catch(function(err) {
+    res.status(500).json({error: err});
   });
 }
 

@@ -9,28 +9,6 @@ module.exports = function Router(database) {
 
   var router = require('express').Router();
 
-  // Require the passport module
-  var passport = require('passport');
-
-  // Require multi part form and storage modules
-  var multer = require('multer');
-
-  var storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      var settings = require('../server-settings');
-      var finalDest = settings.uploadDir;
-
-      console.log("Disc storage dest: " + finalDest);
-
-      cb(null, finalDest);
-    },
-    filename: function (req, file, cb) {
-      cb(null, Date.now() + "-" + file.originalname);
-    }
-  });
-
-  var upload = multer({ storage: storage});
-
   // Require the auth module
   var auth = require('./auth')(db);
 
@@ -40,8 +18,11 @@ module.exports = function Router(database) {
   // ADMIN USERS RESOURCE
   var adminUsers = require('./controllers/AdminUsers');
 
-  // CHIPS RESOURCE
-  var chips = require('./controllers/Chips');
+  // CARDS RESOURCE
+  var cards = require('./controllers/Cards');
+
+  // CARD MODELS RESOURCE
+  var cardModels = require('./controllers/CardModels');
 
   // FOLDERS RESOURCE
   var folders = require('./controllers/Folders');
@@ -51,9 +32,24 @@ module.exports = function Router(database) {
 
   /** RESOURCES */
 
+  // must use this endpoint to login and get a session cookie
+  router.get('/login', auth.isAuthenticated, function(req, res){
+    res.status(200).json({
+        status: 'Login successful!'
+    });
+  });
+  
+  // Will always logout and clear the session cookie
+  router.get('/logout', function(req, res){
+    req.logout();
+    res.status(200).json({
+      status: 'Logout successful!'
+    });
+  });
+
   // Use this endpoint to create admins remotely
   router.route('/admin')
-    .post(adminUsers.AddAdminUser);
+    .post(auth.isAdminAuthenticated, adminUsers.AddAdminUser);
 
   // Use the users module as an endpoint
   router.route('/users')
@@ -65,15 +61,24 @@ module.exports = function Router(database) {
     .put(auth.isAuthenticated, users.UpdateUser)
     .delete(auth.isAdminAuthenticated, users.DeleteUser);
 
-  // Use the chips module as an endpoint
-  router.route('/chips')
-    .get(auth.isAuthenticated, chips.GetChipsList)
-    .post(auth.isAdminAuthenticated, chips.AddChip);
+  // Use the cards module as an endpoint
+  router.route('/cards')
+    .get(auth.isAuthenticated, cards.GetCardsList);
 
-  router.route('/chips/:id')
-    .get(auth.isAuthenticated, chips.GetChipByID)
-    .put(auth.isAdminAuthenticated, chips.UpdateChip)
-    .delete(auth.isAdminAuthenticated, chips.DeleteChip);
+  router.route('/cards/:id')
+    .get(auth.isAuthenticated, cards.GetCardByID)
+    .delete(auth.isAdminAuthenticated, cards.DeleteCard); // only admin delete cards
+
+  router.route('/cards/byModel/:id')
+    .get(auth.isAuthenticated, cards.GetCardsByModelID);
+
+  router.route('/card-models/')
+    .post(auth.isAuthenticated, cardModels.AddCard);
+
+  router.route('/card-models/:id')
+    .get(auth.isAuthenticated, cardModels.GetCardModelByID)
+    .put(auth.isAdminAuthenticated, cardModels.UpdateCardModel)
+    .delete(auth.isAdminAuthenticated, cardModels.DeleteCardModel);
 
   // Use the folders module as an endpoint
   router.route('/folders')

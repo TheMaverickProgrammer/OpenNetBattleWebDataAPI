@@ -2,36 +2,50 @@
 Folders uses routes use to Folders and GET resources from the Mongo DB
 */
 var FoldersModel = require('./models/FoldersModel');
+var settings = require('../../server-settings');
 
 var FoldersController = {};
+
+validateUserFolderName = async function (userId, foldername) {
+  var result = false;
+  var p = FoldersModel.findOne({userId: userId, name: foldername}).exec();
+  await p.then((Folder) => {
+    if(Folder == null) {
+      result = true;
+    }
+  });
+  return result;
+}
 
 // POST API_IP/VERSION/Folders/
 // Create a NEW Folder
 // AddFolder
-FoldersController.AddFolder = function(req, res) {
-  var db = req.database;
-
+FoldersController.AddFolder = async function(req, res) {
   // Users can only create Folders for their own account
   var userId = req.user.userId;
 
   var Folders = {
     userId: userId,
     name: req.body.name,
-    chips: req.body.chips || []
+    cards: req.body.cards || []
   };
 
-  // Force name to fit 8 char limit
-  if(typeof Folders.name !== 'undefined')
-    Folders.name = Folders.name.substring(0, 8);
+  // Force name to fit char limit
+  if(Folders.name.length > settings.preferences.maxFolderNameLength) {
+    Folders.name = Folders.name.substring(0, settings.preferences.maxFolderNameLength);
+  }
+
+  if(await validateUserFolderName(userId, Folders.name) == false) {
+    return res.status(500).json({error: "You already have a folder with the same name"});
+  }
 
   // Execute a query
   var model = new FoldersModel(Folders);
-
   var promise = model.save();
 
   promise.then(function(Folders) {
     res.json({data: Folders});
-  }, function(err) {
+  }).catch(function(err) {
     res.status(500).json({error: err});
   });
 }
@@ -41,12 +55,11 @@ FoldersController.AddFolder = function(req, res) {
 // GetFoldersList
 FoldersController.GetFoldersList = function(req, res) {  
   var query = FoldersModel.find({userId: req.user.userId});
-
   var promise = query.exec();
 
   promise.then(function(Folders) {
     res.json({data: Folders});
-  }, function(err) {
+  }).catch(function(err) {
     res.status(500).json({error: err});
   });
 }
@@ -58,12 +71,15 @@ FoldersController.GetFolderByID = function(req, res) {
   folderId = req.params.id;
 
   var query = FoldersModel.findOne({userId: req.user.userId, _id: folderId});
-
   var promise = query.exec();
 
   promise.then(function(Folders) {
-    res.json({data: Folders});
-  }, function(err) {
+    if(Folders == null) {
+      throw "No Folder with that ID";
+    }
+
+    return res.json({data: Folders});
+  }).catch(function(err) {
     res.status(500).json({error: err});
   });
 }
@@ -73,27 +89,36 @@ FoldersController.GetFolderByID = function(req, res) {
 // UpdateFolder
 FoldersController.UpdateFolder = function(req, res) {
   var query = FoldersModel.findOne({userId: req.user.userId, _id: req.params.id});
-
   var promise = query.exec();
 
-  promise.then(function(Folders) {
+  promise.then(async function(Folders) {    
     if(Folders == null) {
-      res.status(500).json({error: "No Folder with that ID to update"});
-      return;
+      throw "No Folder with that ID to update";
     }
 
+    var nameBefore = Folders.name;
+
     Folders.name = req.body.name || Folders.name;
-    Folders.chips = req.body.description || Folders.chips;
+    Folders.cards = req.body.cards || Folders.cards;
 
-    var promiseSave = Folders.save();
+    // Force name to fit char limit
+    if(Folders.name.length > settings.preferences.maxFolderNameLength) {
+      Folders.name = Folders.name.substring(0, settings.preferences.maxFolderNameLength);
+    }
 
-    promiseSave.then(function(Folders){
-      res.json({data: Folders});
-    },function(err){
-      res.status(500).json({err});
-    });
-  }, function(err) {
-      res.status(500).json({err});
+    if(Folders.name != nameBefore) {
+      if(await validateUserFolderName(req.user.userId, Folders.name) == false) {
+        throw "You already have a folder with the same name";
+      }
+    }
+
+    return Folders.save();
+
+  }).then(function(Folders){
+    res.json({data: Folders});
+  }).catch(function(err) {
+    console.log("error: " + err);
+    res.status(500).json({error: err});
   });
 }
 
@@ -104,18 +129,19 @@ FoldersController.DeleteFolder = function(req, res) {
   var query = FoldersModel.findOne({userId: req.user.userId, _id: req.params.id});
 
   var promise = query.exec();
+  var name;
 
   promise.then(function(Folders) {
-    var name = Folders.name;
-    var promiseRemove = Folders.remove();
+    if(Folders !== null) {
+      name = Folders.name;
+      return Folders.deleteOne();
+    }
 
-    promiseRemove.then(function(){
-      res.status(200).json({data: {message: "Folder " + name + " removed"}});
-    },function(err){
-      res.status(500).json({error: err});
-    });
-  }, function(err) {
-      res.status(500).json({error: err});
+    throw "Could not find a folder with that ID";
+  }).then(function(){
+    res.status(200).json({data: {message: "Folder " + name + " removed"}});
+  }).catch(function(err) {
+    res.status(500).json({error: err});
   });
 }
 

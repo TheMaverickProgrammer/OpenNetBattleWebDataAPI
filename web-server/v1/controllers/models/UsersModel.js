@@ -33,4 +33,4 @@ Users.pre('save', function(callback) {
 });
 
 // Export function to create Users model class
-module.exports = mongoose.model('users', Users);
+module.exports = mongoose.model('Users', Users);

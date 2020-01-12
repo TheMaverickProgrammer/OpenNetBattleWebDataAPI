@@ -17,6 +17,7 @@
     "hat": "0.0.3",
     "mongodb": "^3.4.1",
     "mongoose": ">=5.7.5",
+    "mongoose-connect": "0.0.3",
     "morgan": "^1.9.1",
     "multer": "^1.3.0",
     "passport": "^0.4.0",

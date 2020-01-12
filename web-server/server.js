@@ -13,28 +13,26 @@ Description:
 /*******************************************
 LOAD REQUIRED PACKAGES
 *******************************************/
-// Require the file service module
-var fs = require('fs');
-
-// Require the path module
-var path = require('path');
-
 // Require the logger module
 var logger = require('morgan');
 
 // Require the express module
 var express = require('express');
 
+// Requires express-sessions
+var session = require('express-session')
+
 // Require the cookie parser module
 var cookieParser = require('cookie-parser');
 
-// Require the session module
-var session = require('express-session');
-
 // Mongoose database & ORM
 var mongoose = require('mongoose');
+mongoose.Promise = Promise;
 
-// Require the passport module for sessions
+// Connect middleware for mongoose-passport sessions
+var MongoStore = require('connect-mongo')(session);
+
+// Require the passport module for authentication
 var passport = require('passport');
 
 // Require the body-parser module
@@ -51,23 +49,6 @@ var settings = require('./server-settings');
 // Create the express application
 var app = express();
 
-// Use the json parser in our application
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
-
-app.use(cookieParser());
-
-/*******************************************
-CONFIGURE RESOURCE SHARING WHITELIST
-*******************************************/
-
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE");
-  res.header("Access-Control-Allow-Headers", "Authorization, Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
-
 /*******************************************
 CONFIGURE THE DATABASE
 *******************************************/
@@ -76,13 +57,13 @@ CONFIGURE THE DATABASE
 var mongooseConnection = mongoose.createConnection();
 
 // Connect to mongo
-var url = settings.url,
-    port = settings.port,
-    database = settings.database,
-    user = settings.user,
-    pass = settings.password;
+var url = settings.database.url,
+    port = settings.database.port,
+    collection = settings.database.collection,
+    user = settings.database.user,
+    pass = settings.database.password;
 
-var connectString = 'mongodb://'+user+":"+pass+"@"+url+':'+port+'/'+database+"?authSource=admin";
+var connectString = 'mongodb://'+user+":"+pass+"@"+url+':'+port+'/'+collection+"?authSource=admin";
 mongoose.set('useCreateIndex', true);
 mongoose.connect(connectString, { useNewUrlParser: true, useUnifiedTopology: true} );
 
@@ -98,8 +79,34 @@ db.once('open', function() {
   console.log("Connected to database on " + connectString);
 });
 
+// Use the json parser in our application
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser("OpenBattleNetworkSessionSecret"));
+
+/*******************************************
+CONFIGURE RESOURCE SHARING WHITELIST
+*******************************************/
+
+/*
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE");
+  res.header("Access-Control-Allow-Headers", "Authorization, Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});*/
+
+// Create an express session cookie to use with passport
+app.use(session({  
+  store: new MongoStore({ url: connectString } ),
+  name: settings.server.name + 'Cookie',
+  secret: settings.server.name + 'SessionSecret',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { httpOnly: true, maxAge : 3600000 } //1 Hour
+}));
+
 // Use the Passport middleware in our routes
-app.use(session({secret: 'OpenNetBattle', resave: false, saveUninitialized: true}));
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -110,7 +117,6 @@ if(env === 'dev') {
   app.use(logger('dev'));
 }
 
-// DEBUG: Print session data
 app.use(function(req, res, next) {
   var session = req.session;
 
@@ -136,7 +142,7 @@ app.use(function(req, res, next) {
 CONFIG SERVER
 *******************************************/
 // Use environment defined port or 3000
-var port = process.env.PORT || 3000;
+var port = process.env.PORT || settings.server.port || 3000;
 
 var cleanup = function() {
     db.close();
@@ -185,7 +191,7 @@ if(app.get('env') == 'development') {
 // Production error handler -- no stack traces
 // leaked to user
 app.use(function(err, req, res, next) {
-  res.status(err.status || 500);
+  res.status(err.status || 404);
   res.send();
 });
 
@@ -194,7 +200,7 @@ START THE SERVER
 ******************************************/
 app.listen(port);
 
-console.log('OpenNetBattle API is listening on'
+console.log(settings.server.name + ' is listening on'
 + ' port ' + port + '...');
 
 module.exports = app;
