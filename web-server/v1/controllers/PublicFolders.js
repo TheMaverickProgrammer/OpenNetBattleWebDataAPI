@@ -36,10 +36,9 @@ PublicFoldersController.AddPublicFolder = function(req, res) {
 // Get ALL PublicFolders
 // GetPublicFoldersList
 PublicFoldersController.GetPublicFoldersList = function(req, res) {  
-  var query = PublicFoldersModel.find();
-  var promise = query.exec();
+  var query = PublicFoldersModel.find().exec();
 
-  promise.then(function(PublicFolders) {
+  query.then(function(PublicFolders) {
     res.json({data: PublicFolders});
   }, function(err) {
     res.status(500).json({error: err});
@@ -50,7 +49,7 @@ PublicFoldersController.GetPublicFoldersList = function(req, res) {
 // Get a single PublicFolder
 // GetPublicFolderByID
 PublicFoldersController.GetPublicFolderByID = function(req, res) {
-  var query = PublicFoldersModel.findOne({_id: req.params.id});
+  var query = PublicFoldersModel.findById(req.params.id);
   var promise = query.exec();
 
   promise.then(function(PublicFolders) {
@@ -59,7 +58,7 @@ PublicFoldersController.GetPublicFolderByID = function(req, res) {
     }
 
     throw "Could not find a public folder with that ID";
-  }, function(err) {
+  }).catch(function(err) {
     res.status(500).json({error: err});
   });
 }
@@ -68,13 +67,13 @@ PublicFoldersController.GetPublicFolderByID = function(req, res) {
 // Delete a PublicFolder permanently
 // DeletePublicFolder
 PublicFoldersController.DeletePublicFolder = function(req, res) {
-  var query = BlogPostModel.findOne({_id: req.params.id}).exec();
+  var query = PublicFoldersModel.findById(req.params.id).exec();
   var name;
 
   query.then(function(PublicFolders, reject) {
     if(PublicFolders !== null) {
       name = PublicFolders.name;
-      return PublicFolders.deleOne().exec();
+      return PublicFolders.deleteOne();
     }
 
     throw "Could not find a public folder with that ID";

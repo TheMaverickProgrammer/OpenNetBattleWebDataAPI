@@ -23,7 +23,7 @@ CardsController.GetCardsList = function(req, res) {
 // Get a single Card
 // GetCardByID
 CardsController.GetCardByID = function(req, res) {
-  var query = CardsModel.findOne({_id: req.params.id});
+  var query = CardsModel.findById(req.params.id);
 
   var promise = query.exec();
   var code  = '';
@@ -58,7 +58,7 @@ CardsController.GetCardsByModelID = function(req, res) {
     }
     
     res.json({data: Cards});
-  }, function(err) {
+  }).catch(function(err) {
     res.status(500).json({error: err});
   });
 }
@@ -67,7 +67,7 @@ CardsController.GetCardsByModelID = function(req, res) {
 // Delete a card permanently
 // DeleteCard
 CardsController.DeleteCard = function(req, res) {
-  var promise = CardsModel.findOne({_id: req.params.id}).exec();
+  var promise = CardsModel.findById(req.params.id).exec();
   var card;
   promise.then(function(Card) {
     if(Card !== null) {

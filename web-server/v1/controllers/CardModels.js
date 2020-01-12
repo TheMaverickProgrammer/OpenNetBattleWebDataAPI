@@ -56,7 +56,7 @@ CardModelsController.AddCard = function(req, res) {
     res.json({data: CardModel});
 
     return await makeCards(CardModel._id, CardModel.codes);
-  }, function(err) {
+  }).catch(function(err) {
     res.status(500).json({error: err});
   });
 }
@@ -65,7 +65,7 @@ CardModelsController.AddCard = function(req, res) {
 // Get a list of Cards that share the same model
 // GetCardModelByID
 CardModelsController.GetCardModelByID = function(req, res) {
-  var query = CardModelsModel.find({_id: req.params.id});
+  var query = CardModelsModel.findById(req.params.id);
 
   var promise = query.exec();
 
@@ -75,7 +75,7 @@ CardModelsController.GetCardModelByID = function(req, res) {
     }
     
     res.json({data: CardModel});
-  }, function(err) {
+  }).catch( (err) => {
     res.status(500).json({error: err});
   });
 }
@@ -83,7 +83,7 @@ CardModelsController.GetCardModelByID = function(req, res) {
 // Update a Card Model
 // UpdateCardModel
 CardModelsController.UpdateCardModel = function(req, res) {
-  var query = CardModelsModel.findOne({_id: req.params.id});
+  var query = CardModelsModel.findById(req.params.id);
   var promise = query.exec();
 
   var count = 0;
@@ -98,9 +98,6 @@ CardModelsController.UpdateCardModel = function(req, res) {
       throw "No CardModel with that ID to update";
     }
 
-    // Update our max before updates
-    countMax = CardModelModel.codes.length;
-
     CardModelModel.name = req.body.name || CardModelModel.name;
     CardModelModel.description = req.body.description || CardModelModel.description;
     CardModelModel.verboseDescription = req.body.verboseDescription || CardModelModel.verboseDescription;
@@ -110,6 +107,9 @@ CardModelsController.UpdateCardModel = function(req, res) {
     CardModelModel.secondaryElement = req.body.secondaryElement || CardModelModel.secondaryElement;
     CardModelModel.image = req.body.image || CardModelModel.image;
     CardModelModel.icon = req.body.icon || CardModelModel.icon;
+
+    // Update our new max
+    countMax = CardModelModel.codes.length;
 
     // Force description to fit 30 char limit
     if(typeof CardModelModel.description !== 'undefined')
@@ -142,7 +142,7 @@ CardModelsController.UpdateCardModel = function(req, res) {
               await CardsModel(card).save();
             } else {
               // we need to get rid of it now it is not fitting
-              await CardsModel.findById({_id: card._id}).deleteOne();
+              await CardsModel.findById(card._id).deleteOne();
             }
           }
         )(i++);
@@ -164,7 +164,7 @@ CardModelsController.UpdateCardModel = function(req, res) {
         await makeCards(modelId, remainingCodes);
       }
 
-      res.json({data: newCardModel});
+      res.status(200).json({data: newCardModel});
     }
   });
 }
@@ -173,7 +173,7 @@ CardModelsController.UpdateCardModel = function(req, res) {
 // Delete a CardModel permanently (includes model and all linked Cards will become invalidated)
 // DeleteCardModel
 CardModelsController.DeleteCardModel = function(req, res) {
-  var query = CardModelsModel.findOne({_id: req.params.id});
+  var query = CardModelsModel.findById(req.params.id);
   
   query.exec().then(function(post) {
     if(post == null) {

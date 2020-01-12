@@ -48,13 +48,13 @@ UsersController.GetUsersList = function(req, res) {
 // Get a single User
 // GetUserByID
 UsersController.GetUserByID = function(req, res) {
-  var query = UsersModel.findOne({_id: req.params.id});
+  var query = UsersModel.findById(req.params.id);
 
   var promise = query.exec();
 
   promise.then(function(user) {
     res.json({data: user});
-  }, function(err) {
+  }).catch((err) => {
     res.status(500).json({error: err});
   });
 }
@@ -67,7 +67,7 @@ UsersController.UpdateUser = function(req, res) {
 	  res.status(401).json({error: "Not Authenticated"});;
   }
 
-  UsersModel.findById({_id: req.params.id}).then((user) => {
+  UsersModel.findById(req.params.id).then((user) => {
     if(user == null) {
       throw "User not found with that ID";
     }
@@ -90,7 +90,7 @@ UsersController.UpdateUser = function(req, res) {
 // Delete a user permanently
 // DeleteUser
 UsersController.DeleteUser = function(req, res) {
-  var query = UsersModel.findById({_id: req.params.id}).exec();
+  var query = UsersModel.findById(req.params.id).exec();
   var name;
 
   query.then(function(user) {

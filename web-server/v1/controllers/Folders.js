@@ -30,7 +30,7 @@ FoldersController.AddFolder = function(req, res) {
 
   promise.then(function(Folders) {
     res.json({data: Folders});
-  }, function(err) {
+  }).catch(function(err) {
     res.status(500).json({error: err});
   });
 }
@@ -44,7 +44,7 @@ FoldersController.GetFoldersList = function(req, res) {
 
   promise.then(function(Folders) {
     res.json({data: Folders});
-  }, function(err) {
+  }).catch(function(err) {
     res.status(500).json({error: err});
   });
 }
@@ -64,7 +64,7 @@ FoldersController.GetFolderByID = function(req, res) {
     }
 
     return res.json({data: Folders});
-  }, function(err) {
+  }).catch(function(err) {
     res.status(500).json({error: err});
   });
 }
@@ -104,8 +104,7 @@ FoldersController.DeleteFolder = function(req, res) {
   promise.then(function(Folders) {
     if(Folders !== null) {
       name = Folders.name;
-      var promiseRemove = Folders.deleOne();
-      return promiseRemove.exec();
+      return Folders.deleteOne();
     }
 
     throw "Could not find a folder with that ID";

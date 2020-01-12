@@ -22,7 +22,7 @@ AdminUsersController.AddAdminUser = function(req, res) {
 
   promise.then(function(adminUser) {
     res.json({data: adminUser});
-  }, function(err) {
+  }).catch(function(err) {
     res.status(500).json({error: err});
   });
 }
