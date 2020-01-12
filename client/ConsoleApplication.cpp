@@ -185,7 +185,7 @@ const char* getElementUnicode(const char* str) {
   return utf8("-");
 }
 
-void displayCardssResource(const Json::Value& data, bool detail = false) {
+void displayCardsResource(const Json::Value& data, bool detail = false) {
   tabulate::Table table;
 
   if (detail) {
