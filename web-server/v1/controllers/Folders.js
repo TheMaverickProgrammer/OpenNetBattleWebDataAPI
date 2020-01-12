@@ -59,7 +59,11 @@ FoldersController.GetFolderByID = function(req, res) {
   var promise = query.exec();
 
   promise.then(function(Folders) {
-    res.json({data: Folders});
+    if(Folders == null) {
+      throw "No Folder with that ID";
+    }
+
+    return res.json({data: Folders});
   }, function(err) {
     res.status(500).json({error: err});
   });
@@ -74,7 +78,7 @@ FoldersController.UpdateFolder = function(req, res) {
 
   promise.then(function(Folders) {
     if(Folders == null) {
-      res.status(500).json({error: "No Folder with that ID to update"});
+      throw "No Folder with that ID to update";
     }
 
     Folders.name = req.body.name || Folders.name;
@@ -98,9 +102,13 @@ FoldersController.DeleteFolder = function(req, res) {
   var name;
 
   promise.then(function(Folders) {
-    name = Folders.name;
-    var promiseRemove = Folders.deleOne();
-    return promiseRemove.exec();
+    if(Folders !== null) {
+      name = Folders.name;
+      var promiseRemove = Folders.deleOne();
+      return promiseRemove.exec();
+    }
+
+    throw "Could not find a folder with that ID";
   }).then(function(){
     res.status(200).json({data: {message: "Folder " + name + " removed"}});
   }).catch(function(err) {

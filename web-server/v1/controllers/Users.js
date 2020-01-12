@@ -8,8 +8,6 @@ var UsersController = {};
 // Create a NEW User
 // AddUser
 UsersController.AddUser = function(req, res) {
-  var db = req.database;
-
   var user = {
     username: req.body.username,
     twitter: req.body.twitter || "",
@@ -70,15 +68,17 @@ UsersController.UpdateUser = function(req, res) {
   }
 
   UsersModel.findById({_id: req.params.id}).then((user) => {
-      user.username = req.body.publicName || user.username;
-      user.twitter  = req.body.twitterUrl || user.twitter;
-      user.password = req.body.password || user.password;
-      user.email    = req.body.email || user.email;
-      return user;
-  }).then((user) => {
-      return user.save();
+    if(user == null) {
+      throw "User not found with that ID";
+    }
+
+    user.username = req.body.publicName || user.username;
+    user.twitter  = req.body.twitterUrl || user.twitter;
+    user.password = req.body.password || user.password;
+    user.email    = req.body.email || user.email;
+    return user.save();
   }).then((updatedModel) => {
-      res.json({
+      res.status(200).json({
           data: updatedModel
       });
   }).catch((err) => {
@@ -90,14 +90,15 @@ UsersController.UpdateUser = function(req, res) {
 // Delete a user permanently
 // DeleteUser
 UsersController.DeleteUser = function(req, res) {
-  var query = UsersModel.findOne({_id: req.params.id});
-  var promise = query.exec();
+  var query = UsersModel.findById({_id: req.params.id}).exec();
   var name;
 
-  promise.then(function(user) {
-    name = user.username;
-    var promiseRemove = post.deleteOne();
-    return promiseRemove.exec();
+  query.then(function(user) {
+    if(user !== null) {
+      name = user.username;
+      return user.deleteOne();
+    }
+    throw "User not found with that ID";
   }).then(function(){
     res.status(200).json({data: {message: "User " + name + " removed"}});
   }).catch(function(err) {

@@ -30,7 +30,7 @@ CardsController.GetCardByID = function(req, res) {
 
   promise.then((Card) => {
     if(Card === null) {
-		  res.status(500).json({message: "Failed to find a card with that ID"});
+		  throw "Failed to find a card with that ID";
     }
     
     code = Card.code;
@@ -54,7 +54,7 @@ CardsController.GetCardsByModelID = function(req, res) {
 
   promise.then((Cards) => {
     if(Cards === null) {
-		  res.status(500).json({message: "Failed to find cards with that model ID"});
+		  throw "Failed to find cards with that model ID";
     }
     
     res.json({data: Cards});
@@ -70,12 +70,12 @@ CardsController.DeleteCard = function(req, res) {
   var promise = CardsModel.findOne({_id: req.params.id}).exec();
   var card;
   promise.then(function(Card) {
-    if(Card) {
+    if(Card !== null) {
       card = Card;
-      return Card.deleteOne().exec();
+      return Card.deleteOne();
     }
 
-    res.status(500).json({message: "Failed to delete a card with that ID"});
+    throw "Failed to delete a card with that ID";
 
   }).then(function(){
     res.status(200).json({message: "Card " + card._id + " (code = " + card.code + ") removed"});

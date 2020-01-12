@@ -13,12 +13,6 @@ Description:
 /*******************************************
 LOAD REQUIRED PACKAGES
 *******************************************/
-// Require the file service module
-var fs = require('fs');
-
-// Require the path module
-var path = require('path');
-
 // Require the logger module
 var logger = require('morgan');
 
@@ -33,6 +27,7 @@ var cookieParser = require('cookie-parser');
 
 // Mongoose database & ORM
 var mongoose = require('mongoose');
+mongoose.Promise = Promise;
 
 // Connect middleware for mongoose-passport sessions
 var MongoStore = require('connect-mongo')(session);

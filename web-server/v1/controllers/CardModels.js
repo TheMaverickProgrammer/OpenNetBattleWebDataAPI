@@ -6,7 +6,6 @@ var CardsModel = require('./models/CardsModel');
 
 var CardModelsController = {};
 
-
 function makeCards(id,codes) {
   var allCodes = codes.map((c) => {
     var Card = {
@@ -14,7 +13,7 @@ function makeCards(id,codes) {
       code: c
     };
 
-    var model = CardsModel(Card);
+    var model = new CardsModel(Card);
     return model.save();
   });
 
@@ -53,10 +52,10 @@ CardModelsController.AddCard = function(req, res) {
 
   var promise = model.save();
 
-  promise.then(function(CardModel) {
+  promise.then(async function(CardModel) {
     res.json({data: CardModel});
 
-    return makeCards(CardModel._id, CardModel.codes);
+    return await makeCards(CardModel._id, CardModel.codes);
   }, function(err) {
     res.status(500).json({error: err});
   });
@@ -72,14 +71,12 @@ CardModelsController.GetCardModelByID = function(req, res) {
 
   promise.then(function(CardModel) {
     if(CardModel === null) {
-		  res.status(500).json({message: "Failed to find Card model with that ID"});
-		  return;
+		  throw "Failed to find Card model with that ID";
     }
     
     res.json({data: CardModel});
-
   }, function(err) {
-      res.status(500).json({error: err});
+    res.status(500).json({error: err});
   });
 }
 // PUT API_IP/VERSION/card-models/:id
@@ -98,8 +95,7 @@ CardModelsController.UpdateCardModel = function(req, res) {
 
   promise.then((CardModelModel) => {
     if(CardModelModel == null) {
-      res.status(500).json({error: "No CardModel with that ID to update"});
-      return;
+      throw "No CardModel with that ID to update";
     }
 
     // Update our max before updates
@@ -131,7 +127,7 @@ CardModelsController.UpdateCardModel = function(req, res) {
     var CardsQuery = CardsModel.find({modelId: modelId});
     return CardsQuery.exec();
     
-  }).then((Cards, reject) => {
+  }).then((Cards) => {
     var i = 0;
     try{
       Cards.map((card) => {
@@ -145,7 +141,8 @@ CardModelsController.UpdateCardModel = function(req, res) {
               card.code = codes[i] || card.code;
               await CardsModel(card).save();
             } else {
-              await CardsModel.findById({_id: card._id}).deleteOne().exec(); // we need to get rid of it now it is not fitting
+              // we need to get rid of it now it is not fitting
+              await CardsModel.findById({_id: card._id}).deleteOne();
             }
           }
         )(i++);
@@ -154,7 +151,7 @@ CardModelsController.UpdateCardModel = function(req, res) {
       count = i;
       all_completed_successfully = true;
     } catch (e) {
-      reject(e);
+      throw e;
     }
   }).catch((err) => {
     res.status(500).json({error: err});
@@ -180,17 +177,17 @@ CardModelsController.DeleteCardModel = function(req, res) {
   
   query.exec().then(function(post) {
     if(post == null) {
-      res.status(500).json({error: "No CardModel with that ID to delete"});
+      throw "No CardModel with that ID to delete";
     }
 
-    return post.deleteOne().exec();
+    return post.deleteOne();
   }).then(function(post) {
     var modelId = post._id;
 
     // Don't really care if individual cards fail or not. 
     // We can clean them up manually with their DELETE API call...
     CardsModel.find({modelId: modelId}).exec().then((Cards) => Cards.map((Card) => { Card.deleteOne(); }));
-    res.status(200).json({data: {message: "CardModel and all Card data removed"}});
+    res.status(200).json({data: {message: "CardModel "  + modelId + " and related Card data removed"}});
   }).catch((err) => {
     res.status(500).json({error: err});
   });
