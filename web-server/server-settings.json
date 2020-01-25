@@ -1,14 +1,14 @@
 {
   "database": {
 	  "url": "localhost",
-	  "user": "mongoAdmin",
-	  "password": "sign into mongo database",
+	  "user": "root",
+	  "password": "first cyberworld battle platform",
 	  "port": "27017",
-	  "collection": "local" 
+	  "collection": "battlenetwork" 
   },
   "server": {
-	"name": "Open Net Battle Data API",
-	"port": 999
+	"name": "Cyberworld Data API",
+	"port": 3000
   },
   "preferences": {
 	  "maxFolderNameLength": 8,

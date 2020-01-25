@@ -49,6 +49,10 @@ var settings = require('./server-settings');
 // Create the express application
 var app = express();
 
+// Configure app with CORS
+app.options('*', cors());
+app.use(cors());
+
 /*******************************************
 CONFIGURE THE DATABASE
 *******************************************/
@@ -83,18 +87,6 @@ db.once('open', function() {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser("OpenBattleNetworkSessionSecret"));
-
-/*******************************************
-CONFIGURE RESOURCE SHARING WHITELIST
-*******************************************/
-
-/*
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE");
-  res.header("Access-Control-Allow-Headers", "Authorization, Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});*/
 
 // Create an express session cookie to use with passport
 app.use(session({  
