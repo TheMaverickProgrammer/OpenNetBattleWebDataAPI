@@ -22,9 +22,11 @@ module.exports = function Auth(database) {
             // Check password using bcrypt
             bcrypt.compare(password, adminUser.password, function(err, isMatch) {
               if(err) { return cb(err); }
-			        isMatch = {isAdmin: true, adminUser };
+              if(!isMatch) { return cb("Username not found or password did not match"); }
+
+              let data = {isAdmin: true, adminUser };
               //console.log("user logged in status: " + JSON.stringify(isMatch));
-              cb(null, isMatch);
+              cb(null, data);
             });
           }
         }
@@ -44,9 +46,10 @@ module.exports = function Auth(database) {
             // Check password using bcrypt
             bcrypt.compare(password, user.password, function(err, isMatch) {
               if(err) { return cb(err); }
-			        isMatch = { isAdmin: false, user };
+              if(!isMatch) { return cb("Username not found or password did not match"); }
+              let data = { isAdmin: false, user };
               //console.log("user logged in status: " + JSON.stringify(isMatch));
-              cb(null, isMatch);
+              cb(null, data);
             });
           }
         }
