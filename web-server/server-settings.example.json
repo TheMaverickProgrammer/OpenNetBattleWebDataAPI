@@ -1,0 +1,21 @@
+{
+  "database": {
+	  "url": "",
+	  "user": "",
+	  "password": "",
+	  "port": "",
+	  "collection": "" 
+  },
+  "server": {
+	"name": "Cyberworld Data API",
+	"port": 3000,
+	"sessionDurationSeconds": 604800,
+	"signupWhiteList": [""]
+  },
+  "preferences": {
+	  "maxFolderNameLength": 8,
+	  "maxCardNameLength": 8,
+	  "maxDescriptionLength": 30,
+	  "maxVerboseDescriptionLength": 300
+  }
+}

@@ -1,0 +1,6 @@
+[submodule "tabulate"]
+	path = tabulate
+	url = https://github.com/p-ranav/tabulate.git
+[submodule "client/extern/tabulate"]
+	path = client/extern/tabulate
+	url = https://github.com/p-ranav/tabulate.git
