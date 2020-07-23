@@ -4,7 +4,7 @@ Cards use routes use to POST and GET resources from the Mongo DB
 const moment = require('moment');
 
 var CardsModel = require('./models/CardsModel');
-var CardModelsModel = require('./models/CardModelsModel');
+var CardPropertiesModel = require('./models/CardPropertiesModel');
 var CardsController = {};
 
 // GET API_IP/VERSION/cards/
@@ -36,7 +36,7 @@ CardsController.GetCardByID = function(req, res) {
     
     code = Card.code;
     // Make a second database query to find the card detail
-    var detail = CardModelsModel.findOne({_id: Card.modelId});
+    var detail = CardPropertiesModel.findOne({_id: Card.modelId});
     return detail.exec();
   }).then((Detail) => {
       res.json({data: {_id: req.params.id, code: code, detail: Detail}});
@@ -46,7 +46,7 @@ CardsController.GetCardByID = function(req, res) {
 }
 
 // GET API_IP/VERSION/cards/byModel/:id
-// Get a list of cards that share the same model
+// Get a list of cards that share the same properties model
 // GetCardsByModelID
 CardsController.GetCardsByModelID = function(req, res) {
   var query = CardsModel.find({modelId: req.params.id});
@@ -78,8 +78,22 @@ CardsController.DeleteCard = function(req, res) {
 
     throw "Failed to delete a card with that ID";
 
-  }).then(function(){
-    res.status(200).json({message: "Card " + card._id + " (code = " + card.code + ") removed"});
+  }).then(async () => {
+    let message = "Card " + card._id + " (code = " + card.code + ") removed";
+    try {
+      let cardModel = await CardsModelsModel.findById(card.modelId).exec();
+      let index = cardModel.codes.indexOf(card.code);
+
+      if(index != -1) {
+        cardModel.codes.splice(index, 1);
+      }
+
+      // else, not found? Shouldn't happen but ignore it
+    }catch(err) {
+      message = `Could not remove code ${card.code} from card model ${card.modelId}\n${message}`;
+    }
+
+    res.status(200).json({message: message});
   }).catch(function(err) {
     res.status(500).json({error: err});
   });
@@ -91,7 +105,7 @@ CardsController.DeleteCard = function(req, res) {
 CardsController.GetCardsAfterDate = function(req, res) {
   // This is a combination of using GetCardsByModelID 
   // with GetCardModelsAfterDate calls
-  let promise = CardModelsModel.find({updated: { $gte : moment.unix(req.params.time) }}).exec();
+  let promise = CardPropertiesModel.find({updated: { $gte : moment.unix(req.params.time) }}).exec();
   let cardsArray = [];
   let errors = [];
 

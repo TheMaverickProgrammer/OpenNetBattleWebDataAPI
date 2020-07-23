@@ -21,8 +21,11 @@ module.exports = function Router(database, settings) {
   // CARDS RESOURCE
   var cards = require('./controllers/Cards');
 
-  // CARD MODELS RESOURCE
-  var cardModels = require('./controllers/CardModels');
+  // CARD PROPERTIES RESOURCE
+  var cardProperties = require('./controllers/CardProperties');
+
+  // CARD COMBOS RESOURCE
+  var cardCombos = require('./controllers/CardCombos');
 
   // FOLDERS RESOURCE
   var folders = require('./controllers/Folders');
@@ -114,16 +117,29 @@ module.exports = function Router(database, settings) {
   router.route('/cards/byModel/:id')
     .get(auth.isAuthenticated, cards.GetCardsByModelID);
 
-  router.route('/card-models/')
-    .post(auth.isAuthenticated, cardModels.AddCard);
+  // Use the card properties module as an endpoint
+  router.route('/card-properties/')
+    .post(auth.isAuthenticated, cardProperties.AddCard);
 
-  router.route('/card-models/:id')
-    .get(auth.isAuthenticated, cardModels.GetCardModelByID)
-    .put(auth.isAdminAuthenticated, cardModels.UpdateCardModel)
-    .delete(auth.isAdminAuthenticated, cardModels.DeleteCardModel);
+  router.route('/card-properties/:id')
+    .get(auth.isAuthenticated, cardProperties.GetCardPropertiesByID)
+    .put(auth.isAdminAuthenticated, cardProperties.UpdateCardProperties)
+    .delete(auth.isAdminAuthenticated, cardProperties.DeleteCardProperties);
 
-  router.route('/card-models/since/:time')
-    .get(auth.isAuthenticated, cardModels.GetCardModelsAfterDate);
+  router.route('/card-properties/since/:time')
+    .get(auth.isAuthenticated, cardProperties.GetCardPropertiesAfterDate);
+
+  // Use the card combos module as an endpoint
+  router.route('/combos/')
+    .post(auth.isAuthenticated, cardCombos.AddCombo);
+
+  router.route('/combos/:id')
+    .get(auth.isAuthenticated, cardCombos.GetCardComboByID)
+    .put(auth.isAdminAuthenticated, cardCombos.UpdateCardCombo)
+    .delete(auth.isAdminAuthenticated, cardCombos.DeleteCardCombo);
+
+  router.route('/combos/since/:time')
+    .get(auth.isAuthenticated, cardCombos.GetCardCombosAfterDate);
 
   // Use the folders module as an endpoint
   router.route('/folders')
