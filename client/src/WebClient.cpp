@@ -57,7 +57,7 @@ namespace WebAccounts {
         const bool GetIconForCard(Card card, byte* iconBuffer);
 
         /*! \brief Will log HTTP errors based on their code to the errors member object*/
-        void ParseStatusError(int code);
+        void ParseStatusError(const std::string& url, int code);
 
         /*! \brief Parses the JSON object that has an "error" key
             \param json. A Json::Value object reference that has an "error" key.
@@ -68,15 +68,25 @@ namespace WebAccounts {
         */
         const size_t ParseErrors(const Json::Value& json);
 
-        /*! \brief Will try to download a card model with the ID and stores the data in our out-argument
-            \param id. String ID of the card model to download from the API
-            \param model. A card model structure to fill in from remote data
+        /*! \brief Will try to download card props model with the ID & stores the data in our out-argument
+            \param id. String ID of the card props model to download from the API
+            \param model. A card props structure to fill in from remote data
 
             If the request fails it is logged to the member `errors` object
 
             Returns true if card is downloaded successfully. False if there were errors.
         */
-        const bool FetchCardModel(const std::string& id, CardModel& model);
+        const bool FetchCardProperties(const std::string& id, CardProperties& model);
+
+        /*! \brief Will try to download card combo model with the ID & stores the data in our out-argument
+            \param id. String ID of the card combo model to download from the API
+            \param model. A card combo structure to fill in from remote data
+
+            If the requests fails it is logged to the member `errors` object
+
+            Returns true if combo is downloaded successfully. False if there were errors.
+        */
+        const bool FetchCardCombo(const std::string& id, CardCombo& model);
 
         /*! \brief This will parse JSON data for the folder and return a filled-out Folder object with downloaded cards
             \param data. The JSON to interpret.
@@ -88,6 +98,17 @@ namespace WebAccounts {
             \warning This does not gaurantee that folder data is correct. This should be used as an auxillary function.
         */
         void DigestFolderData(const Json::Value& data, Folder& folder);
+
+        /*! \brief This will parse JSON data for the combo and return a filled-out CardCombo object with downloaded cards
+            \param data. The JSON to interpret.
+            \param combo. The out-argument to fill out from data.
+
+            This will assign the out-argument `combo` with data from JSON
+            It will also attempt to download card data or use the cache if possible
+
+            \warning This does not gaurantee that combo data is correct. This should be used as an auxillary function.
+        */
+        void DigestCardComboData(const Json::Value& data, CardCombo& combo);
 
     public:
         /*! \brief return the httplib client ptr used by this private implemenation*/
@@ -120,11 +141,21 @@ namespace WebAccounts {
 
         /*! \brief This will download all folders attached to this account and return them in the out-argument
             \param folders. The Folder data on this account. May be empty due to failed attempt.
+            \param since. The millisecond timestamp to search for updates instead of returning all folder.
             \return True if the request was successful and parsing was also succesful. False otherwise.
 
             Errors are logged in the `errors` member object
         */
-        const bool DownloadFolders(AccountState::FolderCache& folders);
+        const bool DownloadFolders(AccountState::FolderCache& folders, long long since);
+
+        /*! \brief This will download all card combos in the database and return them in the out-argument
+            \param combos. The card combo data. May be empty due to failed attempt.
+            \param since. The milliseocnd timestamp to search for updates instead of returning all combos.
+            \return True if the request was successful and parsing was also succesful. False otherwise.
+
+            Errors are logged in the `errors` member object
+        */
+        const bool DownloadCardCombos(AccountState::CardComboCache& combos, long long since);
 
         /*! \brief Will try to download a card with the ID and stores the data in our out-argument
             \param id. String ID of the card to download from the API
@@ -135,6 +166,15 @@ namespace WebAccounts {
             Returns true if card is downloaded successfully. False if there were errors.
         */
         const bool FetchCard(const std::string& id, Card& card);
+
+        /*! \brief Will merge the difference from dest cache and src cache 
+            \param dest. The destination cache. Difference in folders and content will be added here.
+            \param src. The source cache. We compare the folders and content with dest before merging.
+
+            If the dest cache does not contain a folder from src, that folder is added
+            If the dest cache does contain a folder from src, the card contents are merged.
+        */
+        void MergeFolderCache(AccountState::FolderCache& dest, AccountState::FolderCache& src);
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -217,7 +257,7 @@ namespace WebAccounts {
         if (local.folders.find(folder.id) != local.folders.end()) return;
 
         if (folder.mode != Folder::RemoteActionMode::DESTROY) {
-            auto&&[iter, ignore] = local.folders.insert(std::make_pair(folder.name, std::make_shared<Folder>(folder)));
+            auto&& [iter, ignore] = local.folders.insert(std::make_pair(folder.name, std::make_shared<Folder>(folder)));
             iter->second->mode = Folder::RemoteActionMode::UPDATE;
         }
     }
@@ -229,12 +269,21 @@ namespace WebAccounts {
         iter->second->mode = Folder::RemoteActionMode::DESTROY;
     }
 
-    void WebClient::FetchAccount() {
-        AccountState::FolderCache folders;
+    void WebClient::FetchAccount(long long since) {
+        this->local.lastFetchTimestamp = since; // override this timestamp
 
-        if (privImpl->DownloadFolders(folders)) {
-            this->local.folders = folders;
+        AccountState::FolderCache folders;
+        AccountState::CardComboCache combos;
+
+        if (privImpl->DownloadFolders(folders, this->local.lastFetchTimestamp)) {
+            privImpl->MergeFolderCache(this->local.folders, folders);
         }
+
+        privImpl->DownloadCardCombos(combos, this->local.lastFetchTimestamp);
+
+        // update our last fetch time
+        using namespace std::chrono;
+        this->local.lastFetchTimestamp = system_clock::now().time_since_epoch().count();
     }
 
     const bool WebClient::FetchCard(const std::string& uuid) {
@@ -342,10 +391,10 @@ namespace WebAccounts {
                 return false; // Nothing we can do
         }
 
-        CardModel model;
+        CardProperties model;
 
         // Query the API if we don't have this model data
-        if (!this->FetchCardModel(card.modelId, model))
+        if (!this->FetchCardProperties(card.modelId, model))
             return false;
 
         imageBuffer = model.imageData;
@@ -363,23 +412,25 @@ namespace WebAccounts {
                 return false; // Nothing we can do
         }
 
-        CardModel model;
+        CardProperties model;
 
         // Query the API if we don't have this model data
-        if (!this->FetchCardModel(card.modelId, model))
+        if (!this->FetchCardProperties(card.modelId, model))
             return false;
 
         iconBuffer = model.iconData;
         return iconBuffer; // non-null data will be true
     }
 
-    void WebClientPimpl::ParseStatusError(int code) {
+    void WebClientPimpl::ParseStatusError(const std::string& url, int code) {
+        parent->errors.push_back("Error reaching URL \"" + url + "\"");
+
         switch (code) {
         case 401:
-            parent->errors.push_back("User is not authenticated (is the client logged in?)");
+            parent->errors.push_back("[401] User is not authenticated (is the client logged in?)");
             break;
         case 500:
-            parent->errors.push_back("There was a problem communicating with the server");
+            parent->errors.push_back("[500] There was a problem communicating with the server");
             break;
         default:
             parent->errors.push_back("Unknown error code: " + std::to_string(code));
@@ -424,7 +475,8 @@ namespace WebAccounts {
             params.insert(std::make_pair("cards", cardID));
         }
 
-        auto res = client->Post(MakeVersionURI("folders").c_str(), params);
+        std::string url = MakeVersionURI("folders");
+        auto res = client->Post(url.c_str(), params);
 
         if (res) {
             if (res->status == 200) {
@@ -453,7 +505,7 @@ namespace WebAccounts {
                 }
             }
             else {
-                ParseStatusError(res->status);
+                ParseStatusError(url, res->status);
             }
         }
         else {
@@ -490,7 +542,8 @@ namespace WebAccounts {
         }
 
         try {
-            auto res = client->Get(MakeVersionURI(std::string("cards/") + id).c_str());
+            const std::string url = MakeVersionURI(std::string("cards/") + id);
+            auto res = client->Get(url.c_str());
 
             if (res) {
                 if (res->status == 200) {
@@ -521,8 +574,8 @@ namespace WebAccounts {
                         parent->local.cards.insert(std::make_pair(card.id, std::make_shared<Card>(card)));
 
                         // See if we need to download the model for this card too
-                        CardModel model;
-                        FetchCardModel(card.modelId, model);
+                        CardProperties model;
+                        FetchCardProperties(card.modelId, model);
                     }
                     else {
                         parent->errors.push_back(error);
@@ -531,7 +584,7 @@ namespace WebAccounts {
                     return true;
                 }
                 else {
-                    ParseStatusError(res->status);
+                    ParseStatusError(url, res->status);
                 }
             }
             else {
@@ -545,18 +598,44 @@ namespace WebAccounts {
         return false;
     }
 
-    const bool WebClientPimpl::FetchCardModel(const std::string& id, CardModel& model) {
+    void WebClientPimpl::MergeFolderCache(AccountState::FolderCache& dest, AccountState::FolderCache& src)
+    {
+      for (auto&& iter : src) {
+        auto&& destIter = dest.find(iter.first);
+
+        if (destIter != dest.end()) {
+          // We have this folder. Merge the updated cards.
+          auto& v1 = destIter->second->cards;
+          auto& v2 = iter.second->cards;
+
+          // We want our diff set to be the same type but non-reference
+          std::remove_reference<decltype(v2)>::type dif;
+
+          std::set_difference(v1.begin(), v1.end(), v2.begin(), v2.end(), std::inserter(dif, dif.begin()));
+
+          for (auto&& cards : dif) {
+            destIter->second->cards.push_back(cards);
+          }
+        }
+        else {
+          // We do not have this folder. Add it to destination.
+          dest.insert(std::make_pair(iter.first, iter.second));
+        }
+      }
+    }
+
+    const bool WebClientPimpl::FetchCardProperties(const std::string& id, CardProperties& model) {
         if (id.empty()) return false;
 
-        auto iter = parent->local.cardModels.find(id);
-        if (iter != parent->local.cardModels.end()) {
+        auto iter = parent->local.cardProperties.find(id);
+        if (iter != parent->local.cardProperties.end()) {
             model = *iter->second;
             return true;
         }
 
         try {
-            auto path = MakeVersionURI(std::string("card-models/") + id);
-            auto res = client->Get(path.c_str());
+            auto url = MakeVersionURI(std::string("card-properties/") + id);
+            auto res = client->Get(url.c_str());
 
             if (res) {
                 if (res->status == 200) {
@@ -577,25 +656,37 @@ namespace WebAccounts {
                     if (parsingSuccessful && ParseErrors(json) == 0) {
                         Json::Value data = json["data"];
 
-                        std::shared_ptr<CardModel> newModel = std::make_shared<CardModel>();
+                        std::shared_ptr<CardProperties> newModel = std::make_shared<CardProperties>();
                         std::vector<char> codes;
+                        std::vector<std::string> metaClasses;
 
                         for (auto&& code : data["codes"]) {
                             codes.push_back(code.asString()[0]);
                         }
 
+                        for (auto&& type : data["metaClasses"]) {
+                            metaClasses.push_back(type.asString());
+                        }
+
+                        ClassTypes classType = static_cast<ClassTypes>(data["class"].asInt());
+
                         // fill in our model
-                        newModel->damage = data["damage"].asInt();
-                        newModel->description = data["description"].asString();
-                        newModel->verboseDescription = data["vernoseDescription"].asString();
-                        newModel->element = data["element"].asString();
-                        newModel->secondaryElement = data["secondaryElement"].asString();
-                        newModel->iconURL = data["icon"].asString();
-                        newModel->imageURL = data["image"].asString();
-                        newModel->isTFC = false; /* TODO: add this to RESTFUL API */
-                        newModel->codes = codes;
                         newModel->id = data["_id"].asString();
                         newModel->name = data["name"].asString();
+                        newModel->damage = data["damage"].asInt();
+                        newModel->element = data["element"].asString();
+                        newModel->secondaryElement = data["secondaryElement"].asString();
+                        newModel->description = data["description"].asString();
+                        newModel->verboseDescription = data["vernoseDescription"].asString();
+                        newModel->imageURL = data["image"].asString();
+                        newModel->iconURL = data["icon"].asString();
+                        newModel->codes = codes;
+                        newModel->timeFreeze = data["timeFreeze"].asBool();
+                        newModel->limit = data["limit"].asInt();
+                        newModel->action = data["action"].asString();
+                        newModel->canBoost = data["canBoost"].asBool();
+                        newModel->metaClasses = metaClasses;
+                        newModel->classType = classType;
 
                         // something has gone terribly wrong. We need a name at minimum.
                         if (newModel->name.empty()) {
@@ -608,7 +699,7 @@ namespace WebAccounts {
                         std::string iconURL = newModel->iconURL;
 
                         // cache it
-                        auto&&[iter, ignore] = parent->local.cardModels.insert(std::make_pair(newModel->id, newModel));
+                        auto&&[iter, ignore] = parent->local.cardProperties.insert(std::make_pair(newModel->id, newModel));
 
                         // Now that we have a permanent cached image to use, download data for it
                         parent->downloadImageHandler(iconURL.c_str(), iter->second->iconData, iter->second->iconDataLen);
@@ -623,14 +714,103 @@ namespace WebAccounts {
                     return true;
                 }
                 else {
-                    ParseStatusError(res->status);
+                    ParseStatusError(url, res->status);
                 }
             }
             else {
-                parent->errors.push_back("GET response for FetchCardModel was nullptr");
+                parent->errors.push_back("GET response for FetchCardProperties was nullptr");
             }
         }
         catch (std::exception & e) {
+            parent->errors.push_back(e.what());
+        }
+
+        return false;
+    }
+
+    const bool WebClientPimpl::FetchCardCombo(const std::string& id, CardCombo& model) {
+        if (id.empty()) return false;
+
+        auto iter = parent->local.cardCombos.find(id);
+        if (iter != parent->local.cardCombos.end()) {
+            model = *iter->second;
+            return true;
+        }
+
+        try {
+            auto url = MakeVersionURI(std::string("combos/") + id);
+            auto res = client->Get(url.c_str());
+
+            if (res) {
+                if (res->status == 200) {
+                    Json::CharReaderBuilder builder;
+                    Json::CharReader* reader = builder.newCharReader();
+
+                    Json::Value json;
+                    std::string error;
+
+                    bool parsingSuccessful = reader->parse(
+                        res->body.c_str(),
+                        res->body.c_str() + res->body.size(),
+                        &json,
+                        &error
+                    );
+                    delete reader;
+
+                    if (parsingSuccessful && ParseErrors(json) == 0) {
+                        Json::Value data = json["data"];
+
+                        std::shared_ptr<CardCombo> newModel = std::make_shared<CardCombo>();
+                        std::vector<std::string> cards;
+                        std::vector<std::string> metaClasses;
+
+                        for (auto&& card : data["cards"]) {
+                            cards.push_back(card.asString());
+                        }
+
+                        for (auto&& type : data["metaClasses"]) {
+                            metaClasses.push_back(type.asString());
+                        }
+
+                        // fill in our model
+                        newModel->id = data["_id"].asString();
+                        newModel->name = data["name"].asString();
+                        newModel->damage = data["damage"].asInt();
+                        newModel->element = data["element"].asString();
+                        newModel->secondaryElement = data["secondaryElement"].asString();
+                        newModel->cards = cards;
+                        newModel->timeFreeze = data["timeFreeze"].asBool();
+                        newModel->action = data["action"].asString();
+                        newModel->canBoost = data["canBoost"].asBool();
+                        newModel->metaClasses = metaClasses;
+
+                        // something has gone terribly wrong. We need a name at minimum.
+                        if (newModel->name.empty()) {
+                            parent->errors.push_back("Something has gone wrong when interpretting combo json. Here is the dump:\n");
+                            parent->errors.push_back(json.toStyledString());
+                            return false;
+                        }
+
+                        // cache it
+                        auto&& [iter, ignore] = parent->local.cardCombos.insert(std::make_pair(newModel->id, newModel));
+
+                        model = *iter->second;
+                    }
+                    else {
+                        parent->errors.push_back(error);
+                    }
+
+                    return true;
+                }
+                else {
+                    ParseStatusError(url, res->status);
+                }
+            }
+            else {
+              parent->errors.push_back("GET response for FetchCardCombos was nullptr");
+            }
+        }
+        catch (std::exception& e) {
             parent->errors.push_back(e.what());
         }
 
@@ -649,9 +829,23 @@ namespace WebAccounts {
         }
     }
 
-    const bool WebClientPimpl::DownloadFolders(AccountState::FolderCache& folders) {
+    void WebClientPimpl::DigestCardComboData(const Json::Value& data, CardCombo& combo) {
+        const std::string id = data["_id"].asString();
+
+        if (this->FetchCardCombo(id, combo)) {
+            for (auto&& id : combo.cards) {
+                Card card;
+                if (!this->FetchCard(id, card)) {
+                    parent->errors.push_back("Could not fetch card " + id + " for combo " + combo.id);
+                }
+            }
+        }
+    }
+
+    const bool WebClientPimpl::DownloadFolders(AccountState::FolderCache& folders, long long since) {
         try {
-            auto res = client->Get(MakeVersionURI("folders").c_str());
+            const std::string url = MakeVersionURI("folders/since/" + std::to_string(since));
+            auto res = client->Get(url.c_str());
 
             if (res) {
                 if (res->status == 200) {
@@ -673,6 +867,9 @@ namespace WebAccounts {
                         const Json::Value& data = json["data"];
                         for (Json::ArrayIndex i = 0; i < data.size(); i++) {
                             std::shared_ptr<Folder> folder = std::make_shared<Folder>();
+                            
+                            // Folders have cards to fetch and cards have
+                            // card properties to fetch
                             this->DigestFolderData(data[i], *folder);
                             folders.insert(std::make_pair(folder->name, folder));
                         }
@@ -684,7 +881,7 @@ namespace WebAccounts {
                     }
                 }
                 else {
-                    ParseStatusError(res->status);
+                    ParseStatusError(url, res->status);
                 }
             }
             else {
@@ -693,6 +890,58 @@ namespace WebAccounts {
 
         }
         catch (std::exception & e) {
+            parent->errors.push_back(e.what());
+        }
+
+        return false;
+    }
+
+    const bool WebClientPimpl::DownloadCardCombos(AccountState::CardComboCache& combos, long long since) {
+        try {
+            const std::string url = MakeVersionURI("combos/since/"+std::to_string(since));
+            auto res = client->Get(url.c_str());
+
+            if (res) {
+                if (res->status == 200) {
+                    Json::CharReaderBuilder builder;
+                    Json::CharReader* reader = builder.newCharReader();
+
+                    Json::Value json;
+                    std::string error;
+
+                    bool parsingSuccessful = reader->parse(
+                        res->body.c_str(),
+                        res->body.c_str() + res->body.size(),
+                        &json,
+                        &error
+                    );
+                    delete reader;
+
+                    if (parsingSuccessful && ParseErrors(json) == 0) {
+                        const Json::Value& data = json["data"];
+                        for (Json::ArrayIndex i = 0; i < data.size(); i++) {
+                            std::shared_ptr<CardCombo> cardCombo = std::make_shared<CardCombo>();
+                            // Combos have cards to fetch which in turn have
+                            // card properties to fetch
+                            this->DigestCardComboData(data[i], *cardCombo);
+                            combos.insert(std::make_pair(cardCombo->name, cardCombo));
+                        }
+
+                        return true;
+                    }
+                    else {
+                        parent->errors.push_back(error);
+                    }
+                }
+                else {
+                    ParseStatusError(url, res->status);
+                }
+            }
+            else {
+              parent->errors.push_back("GET response for DownloadCardCombos was nullptr");
+            }
+        }
+        catch (std::exception& e) {
             parent->errors.push_back(e.what());
         }
 

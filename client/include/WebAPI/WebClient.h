@@ -20,6 +20,10 @@ namespace WebAccounts {
     // forward declare pimpl
     class WebClientPimpl;
 
+    // Input params are (url, bytes, byte_len)
+    // Where url is a C String
+    // Where bytes is bytes downloaded 
+    // Where byte_len is length of bytes
     using DownloadImageHandler = std::function<void(const char*, byte*&, size_t&)>;
 
     /*! \brief WebClient objects are a wrapper around HTTP requests for the Open Battle Web API 
@@ -37,9 +41,9 @@ namespace WebAccounts {
         char isLoggedIn; //!< Flag to remember if a user was logged in successfully 
         std::vector<std::string> errors; //!< A list of errors we can log later
         AccountState local; //!< Represents the player's user account
-        DownloadImageHandler downloadImageHandler;
+        DownloadImageHandler downloadImageHandler; //!< User-provided download functor
 
-        WebClientPimpl* privImpl;
+        WebClientPimpl* privImpl; //!< Private implementation to make header/DLL separate without needing new headers
 
     public:
         /*! \brief Only constructor for the web client. It must have a version, domain URL, and port #
@@ -106,10 +110,11 @@ namespace WebAccounts {
 
         /*! \brief Used at startup. This will overwrite the contents of the web client's folders.
             This routine will download folders and associated card and model data.
+            \param since. A millisecond timestamp that returns data from the API from that point onward.
 
             \warning There's no gaurantee the return information is correct. We just assume so and log errors
         */
-        EXPORT_DLL void FetchAccount();
+        EXPORT_DLL void FetchAccount(long long since);
 
         /*! \brief downloads the associated card's model data and stores it away into the local account state
             \param uuid. Const string reference of the Card's UUID.
@@ -137,9 +142,9 @@ namespace WebAccounts {
         /*! \brief clears all errors */
         EXPORT_DLL void ClearErrors();
 
-        /*! \brief Set a 3rd party download handler for raw image data here 
+        /*! \brief Provide a download handler for raw image data here 
             \warning WebClient's default download handler does nothing.
-            \param callback. A const DownloadImageHandler reference to set the 3rd party image download routine
+            \param callback. A const DownloadImageHandler reference to set the image download routine
         */
         EXPORT_DLL void SetDownloadImageHandler(const DownloadImageHandler& callback);
     };

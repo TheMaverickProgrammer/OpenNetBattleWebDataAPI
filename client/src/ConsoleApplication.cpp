@@ -1,5 +1,14 @@
 ﻿// ConsoleApplication.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
+
+/*********************
+ * WARNING:
+ * This program was used to test the web client api
+ * before integrating with the engine. 
+ * It has not been updated in some time.
+ * DATE: 7/27/2020
+ ********************/
+
 #include <cctype>
 #include <winsock2.h>
 #include <tabulate/table.hpp>

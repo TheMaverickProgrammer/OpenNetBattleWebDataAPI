@@ -1,8 +1,7 @@
 /*
 CardCombosController uses routes use to POST and GET resources from the Mongo DB
 */
-var CardPropertiesModel = require('./models/CardPropertiesModel');
-var CardsModel = require('./models/CardsModel');
+
 var CardCombosModel = require('./models/CardComboModel');
 
 const settings = require('../../server-settings');
