@@ -17,8 +17,6 @@ var CardCombo = Schema({
 });
 
 // Execute before each .save() call
-// When creating card combos, each card list must be entirely unique
-// Order does not matter when comparing card lists
 CardCombo.pre('save', function(callback) {
   var self = this;
   self.updated = Date.now();

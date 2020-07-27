@@ -12,7 +12,7 @@ var CardCombosController = {};
 // POST API_IP/VERSION/combos/
 // Create a NEW CardCombos entry
 // AddCardCombo
-CardCombosController.AddCardCombo = function(req, res) {
+CardCombosController.AddCardCombo = async function(req, res) {
   var CardCombo = {
     cards: req.body.cards,
     name: req.body.name,
@@ -26,6 +26,19 @@ CardCombosController.AddCardCombo = function(req, res) {
 
   // Force card name to fit char limit
   CardCombo.name = CardCombo.name.substring(0, settings.preferences.maxCardNameLength);
+
+  // When creating card combos, each card list must be entirely unique
+  // Order does not matter when comparing card lists
+  let res = null;
+
+  try {
+    res = await CardCombosModel.find({cards: { $all: CardCombo.cards} }).exec();
+    if(res) {
+      return res.json({error: "Combo matches existing entry " + res.name + " (" + res._id + ")"});
+    }
+  }catch(err) {
+    res.status(500).json({error: "Internal server error looking for matching combo"});
+  }
 
   // Execute a query
   var model = new CardCombosModel(CardCombo);
@@ -77,6 +90,19 @@ CardCombosController.UpdateCardCombo = function(req, res) {
     CardCombo.timeFreeze = req.body.timeFreeze || CardCombo.timeFreeze;
     CardCombo.action = req.body.action || CardCombo.action;
     CardCombo.metaClasses = req.body.metaClasses || CardCombo.metaClasses;
+
+    // When creating card combos, each card list must be entirely unique
+    // Order does not matter when comparing card lists
+    let res = null;
+
+    try {
+      res = await CardCombosModel.find({cards: { $all: CardCombo.cards} }).exec();
+      if(res) {
+        return res.json({error: "Combo matches existing entry " + res.name + " (" + res._id + ")"});
+      }
+    }catch(err) {
+      res.status(500).json({error: "Internal server error looking for matching combo"});
+    }
 
     // Force card name to fit char limit
     CardCombo.name = CardCombo.name.substring(0, settings.preferences.maxCardNameLength);
