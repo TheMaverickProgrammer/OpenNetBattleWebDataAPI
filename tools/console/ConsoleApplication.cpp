@@ -1,5 +1,14 @@
 ﻿// ConsoleApplication.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
+
+/*********************
+ * WARNING:
+ * This program was used to test the web client api
+ * before integrating with the engine. 
+ * It has not been updated in some time.
+ * DATE: 7/27/2020
+ ********************/
+
 #include <cctype>
 #include <winsock2.h>
 #include <tabulate/table.hpp>
@@ -37,16 +46,29 @@ int main()
   
   const char* v = root["version"].asCString();
   const char* domain = root["domain"].asCString();
+  const char* cookie = root["cookie"].asCString();
 
-  if (v == nullptr || domain == nullptr) {
-      std::cout << "Domain or version was null. Please check your config.json values" << std::endl;
-      file.clear();
+  try {
+      v = root["version"].asCString();
+      domain = root["domain"].asCString();
+      cookie = root["cookie"].asCString();
+
+      if (v == nullptr || domain == nullptr || cookie == nullptr) {
+          std::cout << "Domain, version, or cookie ID was null. Please check your config.json values" << std::endl;
+          file.clear();
+          return 1;
+      }
+  }
+  catch (std::exception& e) {
+      std::cout << "There was an exception reading the config file." << std::endl;
+      std::cout << "Ensure version, domain, and cookie fields are set." << std::endl;
+      std::cout << "error thrown: " << e.what() << std::endl;
       return 1;
   }
 
   int port = root["port"].asInt();
 
-  WebClient client(v, domain, port);
+  WebClient client(domain, port, v, cookie);
   bool wasOK = client.IsOK();
 
   std::cout << "Connecting to " << domain << ":" << std::to_string(port) << "..." << (wasOK? "OK" : "FAILED") << std::endl;
