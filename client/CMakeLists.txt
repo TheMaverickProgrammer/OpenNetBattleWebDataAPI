@@ -41,8 +41,8 @@ target_include_directories(WebAPI-client PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/incl
 target_include_directories(WebAPI-client PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/extern/jsoncpp)
 target_include_directories(WebAPI-client PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/extern/httplib)
 
-set_target_properties( WebAPI-client
-    PROPERTIES
+set_target_properties( WebAPI-client PROPERTIES 
+	CXX_STANDARD 17
 #    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build/$<CONFIG>"
      LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build/$<CONFIG>"
 #    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build/$<CONFIG>"

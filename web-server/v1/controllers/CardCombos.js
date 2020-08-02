@@ -2,7 +2,7 @@
 CardCombosController uses routes use to POST and GET resources from the Mongo DB
 */
 
-var CardCombosModel = require('./models/CardComboModel');
+var CardCombosModel = require('./models/CardCombosModel');
 
 const settings = require('../../server-settings');
 const moment = require('moment');
@@ -14,7 +14,7 @@ var CardCombosController = {};
 // AddCardCombo
 CardCombosController.AddCardCombo = async function(req, res) {
   var CardCombo = {
-    cards: req.body.cards,
+    cards: req.body.cards || null,
     name: req.body.name,
     damage: req.body.damage,
     element: req.body.element,
@@ -24,20 +24,26 @@ CardCombosController.AddCardCombo = async function(req, res) {
     metaClasses: req.body.metaClasses
   };
 
-  // Force card name to fit char limit
-  CardCombo.name = CardCombo.name.substring(0, settings.preferences.maxCardNameLength);
+  // NOTE: combos do not have card name limit b/c they do not go on cards
 
   // When creating card combos, each card list must be entirely unique
   // Order does not matter when comparing card lists
-  let res = null;
+  // Combo names do not need to be unique
+  if(CardCombo.cards === null) {
+    return res.status(500).json({error: "Combo must have cards"});
+  } else {
+    if(CardCombo.cards.length >= 0 && CardCombo.cards.length < 3) {
+      return res.status(500).json({error: "Combo must have at minimum 3 cards"});
+    }
+  }
 
   try {
-    res = await CardCombosModel.find({cards: { $all: CardCombo.cards} }).exec();
-    if(res) {
-      return res.json({error: "Combo matches existing entry " + res.name + " (" + res._id + ")"});
+    let combo = await CardCombosModel.findOne({cards: { $all: CardCombo.cards } }).exec();
+    if(combo !== null) {
+      return res.json({error: "Combo matches existing entry " + combo.name + " (" + combo._id + ")"});
     }
   }catch(err) {
-    res.status(500).json({error: "Internal server error looking for matching combo"});
+    res.status(500).json({error: "Internal server error while looking for matching combo => "});
   }
 
   // Execute a query
@@ -49,6 +55,25 @@ CardCombosController.AddCardCombo = async function(req, res) {
     return res.status(200).json({data: CardCombo});
   }).catch(function(err) {
     return res.status(500).json({error: err});
+  });
+}
+
+// GET API_IP/VERSION/combos
+// Get a list of all card combos
+// GetCardComboList
+CardCombosController.GetCardComboList = function(req, res) {
+  var query = CardCombosModel.find({});
+
+  var promise = query.exec();
+
+  promise.then(function(list) {
+    if(list === null) {
+		  throw "Failed to fetch list";
+    }
+    
+    res.status(200).json({data: list});
+  }).catch( (err) => {
+    res.status(500).json({error: err});
   });
 }
 
@@ -96,7 +121,7 @@ CardCombosController.UpdateCardCombo = function(req, res) {
     let res = null;
 
     try {
-      res = await CardCombosModel.find({cards: { $all: CardCombo.cards} }).exec();
+      res = await CardCombosModel.findOne({cards: { $all: CardCombo.cards} }).exec();
       if(res) {
         return res.json({error: "Combo matches existing entry " + res.name + " (" + res._id + ")"});
       }
@@ -104,9 +129,6 @@ CardCombosController.UpdateCardCombo = function(req, res) {
       res.status(500).json({error: "Internal server error looking for matching combo"});
     }
 
-    // Force card name to fit char limit
-    CardCombo.name = CardCombo.name.substring(0, settings.preferences.maxCardNameLength);
-    
     let newCardCombo = await CardCombo.save();
 
     res.status(200).json({data: newCardCombo});

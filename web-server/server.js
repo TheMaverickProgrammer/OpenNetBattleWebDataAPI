@@ -44,7 +44,12 @@ var url = require('url');
 // Require Cross Origin Resource Sharing
 var cors = require('cors')
 
+// Require tunnel-ssh
+var tunnel = require('tunnel-ssh');
+
+// Read in the settings json that configures our server
 var settings = require('./server-settings');
+const { token } = require('morgan');
 
 // Create the express application
 var app = express();
@@ -60,140 +65,191 @@ app.use(cors({
   'origin': true
 }));
 
-/*******************************************
-CONFIGURE THE DATABASE
-*******************************************/
+function startServer(db, dbConnectString) {
+  // Use the json parser in our application
+  app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({extended: true}));
+  app.use(cookieParser(settings.server.name + " SessionSecret"));
 
-// Create a mongoose connection
-var mongooseConnection = mongoose.createConnection();
+  // Create an express session cookie to use with passport
+  app.use(session({  
+    store: new MongoStore({ url: dbConnectString } ),
+    name: settings.server.name + ' Cookie',
+    secret: settings.server.name + ' SessionSecret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { httpOnly: true, maxAge : settings.server.sessionDurationSeconds * 1000}
+  }));
 
-// Connect to mongo
-var url = settings.database.url,
-    port = settings.database.port,
-    collection = settings.database.collection,
-    user = settings.database.user,
-    pass = settings.database.password;
+  // Use the Passport middleware in our routes
+  app.use(passport.initialize());
+  app.use(passport.session());
 
-var connectString = 'mongodb://'+user+":"+pass+"@"+url+':'+port+'/'+collection+"?authSource=admin";
-mongoose.set('useCreateIndex', true);
-mongoose.connect(connectString, { useNewUrlParser: true, useUnifiedTopology: true} );
+  // Use the logger module in our development application
+  var env = process.env.NODE_ENV || 'dev';
 
-// Check the state of the pending transactions
-var db = mongoose.connection;
-
-db.on('error', function(err) {
-  // Print the error let the system know it's not good
-  console.log(err.stack);
-});
-
-db.once('open', function() {
-  console.log("Connected to database on " + connectString);
-});
-
-// Use the json parser in our application
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser(settings.server.name + " SessionSecret"));
-
-// Create an express session cookie to use with passport
-app.use(session({  
-  store: new MongoStore({ url: connectString } ),
-  name: settings.server.name + ' Cookie',
-  secret: settings.server.name + ' SessionSecret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { httpOnly: true, maxAge : settings.server.sessionDurationSeconds * 1000}
-}));
-
-// Use the Passport middleware in our routes
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Use the logger module in our development application
-var env = process.env.NODE_ENV || 'dev';
-
-if(env === 'dev') {
-  app.use(logger('dev'));
-}
-
-app.use(function(req, res, next) {
-  var session = req.session;
-
-  if(!session) {
-    session = req.session = {};
+  if(env === 'dev') {
+    app.use(logger('dev'));
   }
 
-  next();
-});
+  app.use(function(req, res, next) {
+    var session = req.session;
 
-// Now that the client has connected to the database,
-// add it as middleware giving the request object
-// a variable named 'database' that all routes
-// can use to execute queries.
+    if(!session) {
+      session = req.session = {};
+    }
 
-app.use(function(req, res, next) {
-  req.database = db;
-
-  next(); // Move onto the next middleware
-});
-
-/******************************************
-CONFIG SERVER
-*******************************************/
-// Use environment defined port or 3000
-var port = process.env.PORT || settings.server.port || 3000;
-
-var cleanup = function() {
-    db.close();
-    process.exit();
-};
-
-process.on('SIGINT', cleanup);
-process.on('SIGTERM', cleanup);
-
-/******************************************
-CREATE ROUTES
-*******************************************/
-
-app.get('/heartbeat', (req, res) => res.sendStatus(200));
-
-// Create our express router
-var v1Router = require('./v1/router')(db, settings);
-
-// Register ALL routes with /v1
-app.use('/v1', v1Router);
-
-// Catch 404 routing error
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-
-  res.json(err);
-
-  next(err);
-});
-
-// Dev error handler -- to print stack trace
-if(app.get('env') == 'development') {
-  app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-	  res.json({message: err.message, error:err});
+    next();
   });
+
+  // Now that the client has connected to the database,
+  // add it as middleware giving the request object
+  // a variable named 'database' that all routes
+  // can use to execute queries.
+
+  app.use(function(req, res, next) {
+    req.database = db;
+
+    next(); // Move onto the next middleware
+  });
+
+  /******************************************
+  CONFIG SERVER
+  *******************************************/
+  // Use environment defined port or 3000
+  var port = process.env.PORT || settings.server.port || 3000;
+
+  var cleanup = function() {
+      db.close();
+      process.exit();
+  };
+
+  process.on('SIGINT', cleanup);
+  process.on('SIGTERM', cleanup);
+
+  /******************************************
+  CREATE ROUTES
+  *******************************************/
+
+  app.get('/heartbeat', (req, res) => res.sendStatus(200));
+
+  // Create our express router
+  var v1Router = require('./v1/router')(db, settings);
+
+  // Register ALL routes with /v1
+  app.use('/v1', v1Router);
+
+  // Catch 404 routing error
+  app.use(function(req, res, next) {
+    var err = new Error('Not Found');
+    err.status = 404;
+
+    res.json(err);
+
+    next(err);
+  });
+
+  // Dev error handler -- to print stack trace
+  if(app.get('env') == 'development') {
+    app.use(function(err, req, res, next) {
+      res.status(err.status || 500);
+      res.json({message: err.message, error:err});
+    });
+  }
+
+  // Production error handler -- no stack traces
+  // leaked to user
+  app.use(function(err, req, res, next) {
+    res.status(err.status || 404);
+    res.send();
+  });
+
+  /*****************************************
+  START THE SERVER
+  ******************************************/
+  app.listen(port);
+
+  console.log(settings.server.name + ' is listening on'
+  + ' port ' + port + '...');
 }
 
-// Production error handler -- no stack traces
-// leaked to user
-app.use(function(err, req, res, next) {
-  res.status(err.status || 404);
-  res.send();
-});
+function startDB(config, next) {
+  /*******************************************
+  CONFIGURE THE DATABASE
+  *******************************************/
 
-/*****************************************
-START THE SERVER
-******************************************/
-app.listen(port);
+  // Create a mongoose connection
+  var mongooseConnection = mongoose.createConnection();
 
-console.log(settings.server.name + ' is listening on'
-+ ' port ' + port + '...');
+  // Connect to mongo
+  var url = config.db.url,
+      port = config.db.port,
+      collection = settings.database.collection,
+      user = settings.database.user,
+      pass = settings.database.password;
 
-module.exports = app;
+  var connectString = 'mongodb://'+user+":"+pass+"@"+url+':'+port+'/'+collection+"?authSource=admin";
+  mongoose.set('useCreateIndex', true);
+  mongoose.connect(connectString, { useNewUrlParser: true, useUnifiedTopology: true} );
+
+  // Check the state of the pending transactions
+  var db = mongoose.connection;
+
+  db.on('error', function(err) {
+    // Print the error and close
+    console.log(err.stack);
+    db.close();
+    process.exit(1);
+  });
+
+  db.once('open', function() {
+    console.log("Connected to database on " + connectString);
+    next(db,connectString);
+  }); // end db once
+}
+
+if(settings.server.ssh.enabled) {
+  let config = {
+    username: settings.server.ssh.user,
+    password: settings.server.ssh.password,
+    host: settings.database.url,
+    port: 22,
+    dstHost: "localhost",
+    dstPort: settings.database.port,
+    tryKeyboard: true
+  };
+
+  let tnl = tunnel(config, function(error, server) {
+    if(error) {
+      console.error("SSH connection error: ", error);
+      return;
+    }
+
+    startDB(
+      {db: {url: "localhost", port: config.dstPort}},
+      startServer
+    );
+  });
+  
+  tnl.on('error', function(err) {
+    console.error("An error occured when running the server =>", err);
+    tnl.close();
+    process.exit(1);
+  });
+
+  tnl.on('keyboard-interactive', function (name, descr, lang, prompts, finish) {
+      // For illustration purposes only! It's not safe to do this!
+      // You can read it from process.stdin or whatever else...
+      var password = config.password;
+      return finish([password]);
+  
+      // And remember, server may trigger this event multiple times
+      // and for different purposes (not only auth)
+  });
+
+} else {
+  startDB(
+    {db: {url: settings.database.url, port: settings.database.port}},
+    startServer
+  );
+}

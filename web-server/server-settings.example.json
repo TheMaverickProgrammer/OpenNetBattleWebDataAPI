@@ -10,7 +10,12 @@
 	"name": "Cyberworld Data API",
 	"port": 3000,
 	"sessionDurationSeconds": 604800,
-	"signupWhiteList": [""]
+	"signupWhiteList": [""],
+	"ssh": {
+		"enabled": false,
+		"user": "",
+		"password": ""
+	}
   },
   "preferences": {
 	  "maxFolderNameLength": 8,

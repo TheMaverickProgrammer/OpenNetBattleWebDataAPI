@@ -24,7 +24,7 @@ function makeCards(id,codes) {
 }
 
 // POST API_IP/VERSION/card-properties/
-// Create a NEW CardProperties entry
+// Create a NEW CardProperties entry and creates new cards at the /card endpoint
 // AddCardProperties
 CardPropertiesController.AddCardProperties = function(req, res) {
   var CardProperties = {

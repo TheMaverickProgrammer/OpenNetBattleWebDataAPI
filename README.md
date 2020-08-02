@@ -41,7 +41,12 @@ Edit the `server-config.json` file to edit the API's configurations
     "name": "Open Net Battle Data API",
     "port": 999,
 	"sessionDurationSeconds": 604800,
-	"signupWhiteList": [""]
+	"signupWhiteList": [""],
+		"ssh": {
+		"enabled": true,
+		"user": "yourServerUsername",
+		"password": "yourServerPassword"
+	}
   },
   "preferences": {
 	  "maxFolderNameLength": 8,
@@ -71,6 +76,11 @@ For public use, some additional security should be been not present in this dist
 You may also want to lock out your ports and API access completely except for white-listed IP addresses.
 
 Run express with HTTPS by [following this guide](https://timonweb.com/posts/running-expressjs-server-over-https/)
+
+#### Using SSH
+set `server.ssh` to `true` to use tunneling. You must provide your server username and password or the tunnel will fail.
+It assumes your server has ssh configured to listen on port `22`. When using tunneling, it will connect to your database
+locally (on the remote server) and use the configured `database.port` to connect to the mongo db at that port as well.
 
 # 2. Client
 

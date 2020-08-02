@@ -89,14 +89,14 @@ module.exports = function Router(database, settings) {
 
   router.route('/users/:id')
     .get(function(req, res, next) {
-		if(req.user && req.user.isAdmin) {
-			return next();
-		} else if(req.user && req.params.id == req.user.userId) {
-			return next();
-		}
-		
-		return res.status(401).end();
-	}, users.GetUserByID)
+      if(req.user && req.user.isAdmin) {
+        return next();
+      } else if(req.user && req.params.id == req.user.userId) {
+        return next();
+      }
+      
+      return res.status(401).end();
+	  }, users.GetUserByID)
     .put(auth.isAuthenticated, users.UpdateUser)
     .delete(auth.isAdminAuthenticated, users.DeleteUser);
 
@@ -119,7 +119,7 @@ module.exports = function Router(database, settings) {
 
   // Use the card properties module as an endpoint
   router.route('/card-properties/')
-    .post(auth.isAuthenticated, cardProperties.AddCard);
+    .post(auth.isAdminAuthenticated, cardProperties.AddCardProperties);
 
   router.route('/card-properties/:id')
     .get(auth.isAuthenticated, cardProperties.GetCardPropertiesByID)
@@ -130,8 +130,9 @@ module.exports = function Router(database, settings) {
     .get(auth.isAuthenticated, cardProperties.GetCardPropertiesAfterDate);
 
   // Use the card combos module as an endpoint
-  router.route('/combos/')
-    .post(auth.isAuthenticated, cardCombos.AddCombo);
+  router.route('/combos')
+    .get(auth.isAuthenticated, cardCombos.GetCardComboList)
+    .post(auth.isAdminAuthenticated, cardCombos.AddCardCombo);
 
   router.route('/combos/:id')
     .get(auth.isAuthenticated, cardCombos.GetCardComboByID)

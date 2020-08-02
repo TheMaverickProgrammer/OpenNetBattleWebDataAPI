@@ -2,7 +2,7 @@ var mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 var Schema = mongoose.Schema;
 
-var CardCombo = Schema({
+var CardCombos = Schema({
   cards: {type: Array, required: true},
   name: {type: String, required: true},
   damage: {type: Number, required: true},
@@ -17,7 +17,7 @@ var CardCombo = Schema({
 });
 
 // Execute before each .save() call
-CardCombo.pre('save', function(callback) {
+CardCombos.pre('save', function(callback) {
   var self = this;
   self.updated = Date.now();
 
@@ -27,5 +27,5 @@ CardCombo.pre('save', function(callback) {
 });
 
 
-// Export function to create CardCombo class
-module.exports = mongoose.model('CardCombo', CardCombo);
+// Export function to create CardCombos class
+module.exports = mongoose.model('CardCombos', CardCombos);
