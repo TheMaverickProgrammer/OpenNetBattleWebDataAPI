@@ -142,6 +142,13 @@ module.exports = function Router(database, settings) {
   router.route('/combos/since/:time')
     .get(auth.isAuthenticated, cardCombos.GetCardCombosAfterDate);
 
+  router.route('/combos/iconURL')
+    .get(auth.isAuthenticated, 
+      function(req, res) {
+        return res.status(200).json({data: settings.preferences.comboIconURL});
+      }
+    );
+
   // Use the folders module as an endpoint
   router.route('/folders')
     .get(auth.isAuthenticated, folders.GetFoldersList)

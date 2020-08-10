@@ -175,6 +175,10 @@ namespace WebAccounts {
             If the dest cache does contain a folder from src, the card contents are merged.
         */
         void MergeFolderCache(AccountState::FolderCache& dest, AccountState::FolderCache& src);
+
+        /*! \brief Will download public-api fields set by the web api's server-settings.json file
+        */
+        void FetchServerSettings(ServerSettings& settings);
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -270,6 +274,8 @@ namespace WebAccounts {
     }
 
     void WebClient::FetchAccount(long long since) {
+        privImpl->FetchServerSettings(this->serverSettings);
+
         this->local.lastFetchTimestamp = since; // override this timestamp
 
         AccountState::FolderCache folders;
@@ -621,6 +627,50 @@ namespace WebAccounts {
           // We do not have this folder. Add it to destination.
           dest.insert(std::make_pair(iter.first, iter.second));
         }
+      }
+    }
+
+    void WebClientPimpl::FetchServerSettings(ServerSettings& settings)
+    {
+      try {
+        const std::string url = MakeVersionURI(std::string("combos/iconURL"));
+        auto res = client->Get(url.c_str());
+
+        if (res) {
+          if (res->status == 200) {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+
+            Json::Value json;
+            std::string error;
+
+            bool parsingSuccessful = reader->parse(
+              res->body.c_str(),
+              res->body.c_str() + res->body.size(),
+              &json,
+              &error
+            );
+            delete reader;
+
+            if (parsingSuccessful && ParseErrors(json) == 0) {
+              Json::Value data = json["data"];
+              const char* comboIconURL = data.asString().c_str();
+              this->parent->downloadImageHandler(comboIconURL, settings.comboIconData, settings.comboIconDataLen);
+            }
+            else {
+              parent->errors.push_back(error);
+            }
+          }
+          else {
+            ParseStatusError(url, res->status);
+          }
+        }
+        else {
+          parent->errors.push_back("GET response for FetchServerSettings was nullptr");
+        }
+      }
+      catch (std::exception& e) {
+        parent->errors.push_back(e.what());
       }
     }
 

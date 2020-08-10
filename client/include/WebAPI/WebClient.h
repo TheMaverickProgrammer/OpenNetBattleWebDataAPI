@@ -26,6 +26,12 @@ namespace WebAccounts {
     // Where byte_len is length of bytes
     using DownloadImageHandler = std::function<void(const char*, byte*&, size_t&)>;
 
+    /*! \brief settings defined by the web api server that should be shared with a client*/
+    struct ServerSettings {
+      byte* comboIconData{ 0 };
+      size_t comboIconDataLen{ 0 };
+    };
+
     /*! \brief WebClient objects are a wrapper around HTTP requests for the Open Battle Web API 
         This wrapper is smart to cache all downloaded data and manage the desynced state each folder is in
         It provides utilities to easily integrate into the battle engine
@@ -42,7 +48,7 @@ namespace WebAccounts {
         std::vector<std::string> errors; //!< A list of errors we can log later
         AccountState local; //!< Represents the player's user account
         DownloadImageHandler downloadImageHandler; //!< User-provided download functor
-
+        ServerSettings serverSettings; //!< The web api fields and values that needs to be shared with a client
         WebClientPimpl* privImpl; //!< Private implementation to make header/DLL separate without needing new headers
 
     public:
