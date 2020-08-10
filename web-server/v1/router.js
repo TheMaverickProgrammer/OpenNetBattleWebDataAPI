@@ -142,10 +142,11 @@ module.exports = function Router(database, settings) {
   router.route('/combos/since/:time')
     .get(auth.isAuthenticated, cardCombos.GetCardCombosAfterDate);
 
-  router.route('/combos/iconURL')
+  // Use json object `preferences` as a key lookup
+  router.route('/settings/:key')
     .get(auth.isAuthenticated, 
       function(req, res) {
-        return res.status(200).json({data: settings.preferences.comboIconURL});
+        return res.status(200).json({data: settings.preferences[req.params.key]});
       }
     );
 

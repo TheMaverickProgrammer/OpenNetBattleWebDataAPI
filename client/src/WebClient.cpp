@@ -638,7 +638,7 @@ namespace WebAccounts {
     void WebClientPimpl::FetchServerSettings(ServerSettings& settings)
     {
       try {
-        const std::string url = MakeVersionURI(std::string("combos/iconURL"));
+        const std::string url = MakeVersionURI(std::string("settings/comboIconURL"));
         auto res = client->Get(url.c_str());
 
         if (res) {
