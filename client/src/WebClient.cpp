@@ -368,6 +368,11 @@ namespace WebAccounts {
         downloadImageHandler = callback;
     }
 
+    const ServerSettings& WebClient::GetServerSettings() const
+    {
+      return this->serverSettings;
+    }
+
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                    PRIVATE IMPLEMENTATION                                            //
     //////////////////////////////////////////////////////////////////////////////////////////////////////////

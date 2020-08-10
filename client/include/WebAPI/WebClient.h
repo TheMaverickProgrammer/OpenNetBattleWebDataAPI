@@ -153,5 +153,8 @@ namespace WebAccounts {
             \param callback. A const DownloadImageHandler reference to set the image download routine
         */
         EXPORT_DLL void SetDownloadImageHandler(const DownloadImageHandler& callback);
+
+        /* !\brief Read the server settings aquired from the web api*/
+        EXPORT_DLL const ServerSettings& GetServerSettings() const;
     };
 }
