@@ -11,6 +11,10 @@
 #define USE_STRCPY_S 1
 #endif
 
+#ifdef __GNUC__
+#define USE_STRCPY_S 1
+#endif
+
 #ifndef USE_STRCPY_S
 #define USE_STRCPY_S 0
 #endif
