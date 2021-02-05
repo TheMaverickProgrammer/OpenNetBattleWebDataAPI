@@ -183,19 +183,19 @@ module.exports = function Router(database, settings) {
 
   // Use the key items module as an endpoint
   router.route('/keyitems')
-    .get(auth.isAuthenticated, keyitems.GetKeyItems)
-    .post(auth.isAuthenticated, keyitems.AddKeyItem);
+    .get(auth.isAuthenticated, keyItems.GetKeyItemsList)
+    .post(auth.isAuthenticated, keyItems.AddKeyItem);
 
   router.route('/keyitems/owned')
-    .get(auth.isAuthenticated, keyitems.GetOwnedKeyItemsList)
+    .get(auth.isAuthenticated, keyItems.GetOwnedKeyItemsList)
 
   router.route('/keyitems/:id')
-    .get(auth.isAuthenticated, keyitems.GetKeyItemByID)
-    .put(auth.isAuthenticated, keyitems.UpdateKeyItem)
-    .delete(auth.isAuthenticated, keyitems.DeleteKeyItem);
+    .get(auth.isAuthenticated, keyItems.GetKeyItemByID)
+    .put(auth.isAuthenticated, keyItems.UpdateKeyItem)
+    .delete(auth.isAuthenticated, keyItems.DeleteKeyItem);
 
   router.route('/keyitems/since/:time')
-    .get(auth.isAuthenticated, keyitems.GetKeyItemsAfterDate);
+    .get(auth.isAuthenticated, keyItems.GetKeyItemsAfterDate);
 
   // Use the products module as an endpoint
   router.route('/products')

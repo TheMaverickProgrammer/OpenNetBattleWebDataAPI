@@ -7,7 +7,7 @@ var Users = Schema({
   twitter: {type: String, required: false, unique: false},
   password: {type: String, required: true},
   email: {type: String, required: true, unique: true},
-  monies: {type: Int32, required: false, default: 0}, 
+  monies: {type: Number, required: false, default: 0}, 
   created: {type: Date, default: Date.now}, //  Timestamp
   updated: {type: Date, default: Date.now} // Timestamp
   // userId == _id
@@ -15,7 +15,6 @@ var Users = Schema({
 
 // The following code will execute before each user.save() call
 var bcrypt = require('bcrypt-nodejs');
-const { Int32 } = require('mongodb');
 
 Users.pre('save', function(callback) {
   var user = this;
