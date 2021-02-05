@@ -28,10 +28,10 @@ KeyItemsController.AddKeyItem = async function(req, res) {
 
   var Item = {
     userId: userId,
-    name: req.body.name,
-    description: req.body.description,  
+    name: req.body.name || "",
+    description: req.body.description || "",  
     owners: req.body.owners || [],
-    servers: req.body.servers
+    servers: req.body.servers || []
   };
 
   // Force name to fit char limit
@@ -122,7 +122,7 @@ KeyItemsController.UpdateKeyItem = function(req, res) {
     Item.servers = req.body.servers || Item.servers;
 
     // Force name to fit char limit
-    if(Irem.name.length > settings.preferences.maxKeyItemNameLength) {
+    if(Item.name.length > settings.preferences.maxKeyItemNameLength) {
       Item.name = Item.name.substring(0, settings.preferences.maxKeyItemNameLength);
     }
 
@@ -154,10 +154,10 @@ KeyItemsController.DeleteKeyItem = function(req, res) {
     if(Item !== null) {
       name = Item.name;
 
-      if(Item.owners.length() == 0) {
+      if(Item.owners.length == 0) {
         return Item.deleteOne();
       } else {
-        throw "Cannot remove. This Key Item is owned by players."
+        throw "Cannot remove. This Key Item is owned by players.";
       }
     }
 

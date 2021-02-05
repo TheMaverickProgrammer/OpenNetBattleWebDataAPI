@@ -69,7 +69,13 @@ UsersController.GetUserByID = function(req, res) {
   var promise = query.exec();
 
   promise.then(function(user) {
-    let copy = { username: user.username, twitter: user.twitter, email: user.email, userId: user._id };
+    let copy = { 
+      username: user.username, 
+      twitter: user.twitter, 
+      email: user.email, 
+      monies: user.monies,
+      userId: user._id 
+    };
 	
     res.json({data: copy});
   }).catch((err) => {
@@ -94,7 +100,6 @@ UsersController.UpdateUser = function(req, res) {
     user.twitter  = req.body.twitter || user.twitter;
     user.password = req.body.password || user.password;
     user.email    = req.body.email || user.email;
-    user.monies   = req.body.monies || user.monies;
     
     return await user.save();
   }).then((updatedModel) => {

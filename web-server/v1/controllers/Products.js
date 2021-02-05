@@ -19,8 +19,8 @@ ProductsController.AddProduct = async function(req, res) {
    var userId = req.user.userId;
 
   var Product = {
-    user: userId,
-    item: req.body.itemId,
+    userId: userId,
+    itemId: req.body.itemId,
     monies: req.body.monies,
   };
 
@@ -146,16 +146,21 @@ ProductsController.PurchaseProduct = async function(req, res) {
   var customer = await UsersModel.findById(customerId);
 
   if(product == null) {
-    res.status(500).json({error: "Product does not exist"});
+    return res.status(500).json({error: "Product does not exist"});
   }
 
   if(customer == null) {
-    res.status(500).json({error: "Customer does not exist"});
+    return res.status(500).json({error: "Customer does not exist"});
   }
 
-  if(customer.monies < productId.monies) {
-    res.status(500).json({error: "Not enough monies to purchase"});
+  let monies = customer.monies || 0;
+
+  if(monies < product.monies) {
+    return res.status(500).json({error: "Not enough monies to purchase"});
   }
+
+  customer.monies = Math.max(monies - product.monies, 0);
+  customer.save();
 
   var productOwnerId = product.userId;
 
