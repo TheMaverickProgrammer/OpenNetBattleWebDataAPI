@@ -36,6 +36,9 @@ module.exports = function Router(database, settings) {
   // KEY ITEMS RESOURCE
   var keyItems = require('./controllers/KeyItems');
 
+  // PRODUCTS RESOURCE
+  var products = require('./controllers/Products');
+
   /** RESOURCES */
 
   // must use this endpoint to login and get a session cookie
@@ -193,6 +196,22 @@ module.exports = function Router(database, settings) {
 
   router.route('/keyitems/since/:time')
     .get(auth.isAuthenticated, keyitems.GetKeyItemsAfterDate);
+
+  // Use the products module as an endpoint
+  router.route('/products')
+    .get(auth.isAuthenticated, products.GetProductsList)
+    .post(auth.isAuthenticated, products.AddProduct);
+
+  router.route('/products/:id')
+    .get(auth.isAuthenticated, products.GetProductByID)
+    .put(auth.isAuthenticated, products.UpdateProduct)
+    .delete(auth.isAuthenticated, products.DeleteProduct);
+
+  router.route('/products/since/:time')
+    .get(auth.isAuthenticated, products.GetProductsAfterDate);
+
+  router.route('/products/purchase/:id')
+    .post(auth.isAuthenticated, products.PurchaseProduct);
 
   return router;
 };

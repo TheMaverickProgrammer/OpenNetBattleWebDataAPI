@@ -1,5 +1,5 @@
 /*
-KeyItems uses routes use to KeeyItems and GET resources from the Mongo DB
+KeyItemsController uses routes use to KeyItems and GET resources from the Mongo DB
 */
 const moment = require('moment');
 const settings = require('../../server-settings');
@@ -153,7 +153,12 @@ KeyItemsController.DeleteKeyItem = function(req, res) {
   promise.then(function(Item) {
     if(Item !== null) {
       name = Item.name;
-      return Item.deleteOne();
+
+      if(Item.owners.length() == 0) {
+        return Item.deleteOne();
+      } else {
+        throw "Cannot remove. This Key Item is owned by players."
+      }
     }
 
     throw "Could not find a key item with that ID";
