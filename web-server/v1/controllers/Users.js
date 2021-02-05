@@ -94,10 +94,17 @@ UsersController.UpdateUser = function(req, res) {
     user.twitter  = req.body.twitter || user.twitter;
     user.password = req.body.password || user.password;
     user.email    = req.body.email || user.email;
+    user.monies   = req.body.monies || user.monies;
     
     return await user.save();
   }).then((updatedModel) => {
-      let copy = { username: updatedModel.username, twitter: updatedModel.twitter, email: updatedModel.email, userId: updatedModel._id };
+      let copy = { 
+        username: updatedModel.username, 
+        twitter: updatedModel.twitter, 
+        email: updatedModel.email, 
+        monies: updatedModel.monies,
+        userId: updatedModel._id 
+      };
       res.status(200).json({
           data: copy
       });

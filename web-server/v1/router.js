@@ -33,6 +33,9 @@ module.exports = function Router(database, settings) {
   // PUBLIC FOLDERS RESOURCE
   var publicFolders = require('./controllers/PublicFolders');
 
+  // KEY ITEMS RESOURCE
+  var keyItems = require('./controllers/KeyItems');
+
   /** RESOURCES */
 
   // must use this endpoint to login and get a session cookie
@@ -174,6 +177,22 @@ module.exports = function Router(database, settings) {
 
   router.route('/public-folders/since/:time')
     .get(auth.isAuthenticated, publicFolders.GetPublicFoldersAfterDate);
+
+  // Use the key items module as an endpoint
+  router.route('/keyitems')
+    .get(auth.isAuthenticated, keyitems.GetKeyItems)
+    .post(auth.isAuthenticated, keyitems.AddKeyItem);
+
+  router.route('/keyitems/owned')
+    .get(auth.isAuthenticated, keyitems.GetOwnedKeyItemsList)
+
+  router.route('/keyitems/:id')
+    .get(auth.isAuthenticated, keyitems.GetKeyItemByID)
+    .put(auth.isAuthenticated, keyitems.UpdateKeyItem)
+    .delete(auth.isAuthenticated, keyitems.DeleteKeyItem);
+
+  router.route('/keyitems/since/:time')
+    .get(auth.isAuthenticated, keyitems.GetKeyItemsAfterDate);
 
   return router;
 };

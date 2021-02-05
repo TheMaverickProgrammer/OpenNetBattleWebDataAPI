@@ -20,7 +20,9 @@
   "preferences": {
 	  "maxFolderNameLength": 8,
 	  "maxCardNameLength": 8,
+	  "maxKeyItemNameLength": 10,
 	  "maxDescriptionLength": 30,
-	  "maxVerboseDescriptionLength": 300
+	  "maxVerboseDescriptionLength": 300,
+	  "comboIconURL": ""
   }
 }
