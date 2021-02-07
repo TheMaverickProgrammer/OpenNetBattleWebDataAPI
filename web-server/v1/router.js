@@ -79,13 +79,6 @@ module.exports = function Router(database, settings) {
       if(req.ips.length) ip = req.ips[0];
       else ip = req.ip;
 
-      // See if using IPv6
-      if(ip.indexOf(".") > -1) {
-        if(ip.substr(0,7) != "::ffff:") {
-          return res.status(500).json({error: "Invalid IPv6 format"});
-        }
-      }
-      
       if(settings.server.signupWhiteList.findIndex( item => item === ip) > -1) {
         next();
       } else {
@@ -153,8 +146,7 @@ module.exports = function Router(database, settings) {
     .get(auth.isAuthenticated, 
       function(req, res) {
         return res.status(200).json({data: settings.preferences[req.params.key]});
-      }
-    );
+      });
 
   // Use the folders module as an endpoint
   router.route('/folders')
@@ -195,7 +187,7 @@ module.exports = function Router(database, settings) {
     .delete(auth.isAuthenticated, keyItems.DeleteKeyItem);
 
   router.route('/keyitems/since/:time')
-    .get(auth.isAuthenticated, keyItems.GetKeyItemsAfterDate);
+    .get(auth.isAdminAuthenticated, keyItems.GetKeyItemsAfterDate);
 
   // Use the products module as an endpoint
   router.route('/products')
@@ -207,11 +199,11 @@ module.exports = function Router(database, settings) {
     .put(auth.isAuthenticated, products.UpdateProduct)
     .delete(auth.isAuthenticated, products.DeleteProduct);
 
-  router.route('/products/since/:time')
-    .get(auth.isAuthenticated, products.GetProductsAfterDate);
-
   router.route('/products/purchase/:id')
     .post(auth.isAuthenticated, products.PurchaseProduct);
+
+  router.route('/products/since/:time')
+    .get(auth.isAdminAuthenticated, products.GetProductsAfterDate);
 
   return router;
 };

@@ -8,6 +8,7 @@ var Users = Schema({
   password: {type: String, required: true},
   email: {type: String, required: true, unique: true},
   monies: {type: Number, required: false, default: 0}, 
+  pool: {type: Array, default: []}, // extra cards with no home
   created: {type: Date, default: Date.now}, //  Timestamp
   updated: {type: Date, default: Date.now} // Timestamp
   // userId == _id

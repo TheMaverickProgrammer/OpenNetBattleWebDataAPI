@@ -119,8 +119,7 @@ KeyItemsController.UpdateKeyItem = function(req, res) {
     Item.name = req.body.name || Item.name;
     Item.owners = req.body.owners || Item.owners;
     Item.description = req.body.description || Item.description;
-    Item.servers = req.body.servers || Item.servers;
-
+    
     // Force name to fit char limit
     if(Item.name.length > settings.preferences.maxKeyItemNameLength) {
       Item.name = Item.name.substring(0, settings.preferences.maxKeyItemNameLength);

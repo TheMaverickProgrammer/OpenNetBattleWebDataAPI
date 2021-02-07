@@ -6,7 +6,6 @@ var KeyItems = Schema({
   userId: {type: Schema.Types.ObjectId, required: true},
   owners: {type: Array, default: []}, // Ids of users who have this key item
   name: {type: String, required: true},
-  servers: {type: Array, required: true}, // IP address of the server(s) handing these items out
   description: {type: String, required: true},
   created: {type: Date, default: Date.now},
   updated: {type: Date, default: Date.now}

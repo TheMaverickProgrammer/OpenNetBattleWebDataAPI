@@ -1,28 +1,29 @@
 {
-  "database": {
-	  "url": "",
-	  "user": "",
-	  "password": "",
-	  "port": "",
-	  "collection": "" 
-  },
-  "server": {
-	"name": "Cyberworld Data API",
-	"port": 3000,
-	"sessionDurationSeconds": 604800,
-	"signupWhiteList": [""],
-	"ssh": {
-		"enabled": false,
+	"database": {
+		"url": "",
 		"user": "",
-		"password": ""
+		"password": "",
+		"port": "",
+		"collection": "" 
+	},
+	"server": {
+		"name": "Cyberworld Data API",
+		"port": 3000,
+		"sessionDurationSeconds": 604800,
+		"signupWhiteList": [""],
+		"ssh": {
+			"enabled": false,
+			"user": "",
+			"password": ""
+		}
+	},
+	"preferences": {
+		"loanPercentage": 10,
+		"maxFolderNameLength": 8,
+		"maxCardNameLength": 8,
+		"maxKeyItemNameLength": 10,
+		"maxDescriptionLength": 30,
+		"maxVerboseDescriptionLength": 300,
+		"comboIconURL": ""
 	}
-  },
-  "preferences": {
-	  "maxFolderNameLength": 8,
-	  "maxCardNameLength": 8,
-	  "maxKeyItemNameLength": 10,
-	  "maxDescriptionLength": 30,
-	  "maxVerboseDescriptionLength": 300,
-	  "comboIconURL": ""
-  }
 }
