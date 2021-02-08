@@ -159,6 +159,16 @@ ProductsController.GetProductsAfterDate = function(req, res) {
 // Try to purchase a product and return a Tx response
 // PurchaseProduct
 ProductsController.PurchaseProduct = async function(req, res) {
+  const ERROR_CODES = {
+    invalid_purchase: 1,
+    self_sell: 2,
+    key_item_owned: 3,
+    no_monies: 4,
+    network_error: 5
+  };
+
+  Object.freeze(ERROR_CODES);
+
   var productId = req.params.id;
   var customerId = req.user.userId;
 
@@ -176,7 +186,7 @@ ProductsController.PurchaseProduct = async function(req, res) {
   try {
     product = await ProductsModel.findOne({_id: productId});
   }catch(e) {
-    return res.status(500).json({error: "Product does not exist"});
+    return res.status(500).json({error: "Product does not exist", code: ERROR_CODES.invalid_purchase});
   }
 
   try {
@@ -184,7 +194,7 @@ ProductsController.PurchaseProduct = async function(req, res) {
     Object.assign(revert.customerPool, customer.pool); // copy value
     Object.assign(revert.customerMonies, customer.monies); // copy value
   } catch(e) {
-    return res.status(500).json({error: "Customer does not exist"});
+    return res.status(500).json({error: "Customer does not exist", code: ERROR_CODES.invalid_purchase});
   }
 
   try {
@@ -192,17 +202,17 @@ ProductsController.PurchaseProduct = async function(req, res) {
     Object.assign(revert.productOwnerPool, productOwner.pool); // copy value
     Object.assign(revert.productOwnerMonies, productOwner.monies); // copy value
   } catch(e) {
-    return res.status(500).json({error: "Cannot buy from a vendor that does not exist"});
+    return res.status(500).json({error: "Cannot buy from a vendor that does not exist", code: ERROR_CODES.invalid_purchase});
   }
 
   if(productOwner._id.equals(customer._id)) {
-    return res.status(500).json({error: "You own this vendor"});
+    return res.status(500).json({error: "You own this vendor", code: ERROR_CODES.self_sell});
   }
 
   let monies = customer.monies || 0;
 
   if(monies < product.monies) {
-    return res.status(500).json({error: "Not enough monies to purchase"});
+    return res.status(500).json({error: "Not enough monies to purchase", code: ERROR_CODES.no_monies});
   }
 
   var productOwnerId = product.userId;
@@ -250,7 +260,7 @@ ProductsController.PurchaseProduct = async function(req, res) {
           productWasLoaned = true; // fix if a race condtion happened here
         } catch(e) {
           console.log(e);
-          return res.status(500).json({error: "Transaction became invalid during processing"});
+          return res.status(500).json({error: "Transaction became invalid during processing", code: ERROR_CODES.network_error});
         }
       } else {
         productOwner.pool.splice(index, 1); // remove from the owner's card pool
@@ -263,7 +273,7 @@ ProductsController.PurchaseProduct = async function(req, res) {
         keyItem.owners.push(customer._id); // add the owner
       }catch(e) {
         console.log(e);
-        return res.status(500).json({error: "KeyItem not found to purchase"});
+        return res.status(500).json({error: "KeyItem not found to purchase", code: ERROR_CODES.invalid_purchase});
       }
     }
   } else {
@@ -279,7 +289,7 @@ ProductsController.PurchaseProduct = async function(req, res) {
         keyItem.owners.push(customer._id); // add the owner
       }catch(e) {
         console.log(e);
-        return res.status(500).json({error: "KeyItem not found to purchase"});
+        return res.status(500).json({error: "KeyItem not found to purchase", code: ERROR_CODES.invalid_purchase});
       }
     }
   }
@@ -359,7 +369,7 @@ ProductsController.PurchaseProduct = async function(req, res) {
       productOwner.save();
     }
 
-    return res.status(500).json({error: err});
+    return res.status(500).json({error: err, code: ERROR_CODES.network_error});
   }
 }
 

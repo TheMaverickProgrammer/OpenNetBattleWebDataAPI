@@ -4,7 +4,7 @@
 #ifndef WEBAPI_STATIC
 # ifdef OPENNETBATTLEWEBCLIENT_EXPORTS
 #   define EXPORT_DLL  __declspec( dllexport )
-#   define EXTERN_TEMPLATE
+#   define EXTERN_TEMPLATE extern
 # else
 #   define EXPORT_DLL  __declspec( dllimport )
 #   define EXTERN_TEMPLATE extern
@@ -30,6 +30,16 @@ namespace WebAccounts {
     struct ServerSettings {
       byte* comboIconData{ 0 };
       size_t comboIconDataLen{ 0 };
+    };
+
+    /*! \brief error codes returned when purchasing products over the API */
+    enum class PurchaseResult : uint8_t {
+      success = 0x00,
+      invalid_purchase = 0x01,
+      self_sell = 0x02,
+      key_item_owned = 0x03,
+      no_monies = 0x04,
+      network_error = 0x05
     };
 
     /*! \brief WebClient objects are a wrapper around HTTP requests for the Open Battle Web API 
@@ -135,6 +145,8 @@ namespace WebAccounts {
             then the folder is requested to be removed from the account (locally and remotely)
         */
         EXPORT_DLL void PushAccount();
+
+        EXPORT_DLL PurchaseResult PurchaseProduct(const std::string& uuid);
 
         /*! \brief Query if the connection is OK */
         EXPORT_DLL const bool IsOK();

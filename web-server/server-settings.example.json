@@ -8,6 +8,7 @@
 	},
 	"server": {
 		"name": "Cyberworld Data API",
+		"signingKey": "",
 		"port": 3000,
 		"sessionDurationSeconds": 604800,
 		"signupWhiteList": [""],

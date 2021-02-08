@@ -316,6 +316,7 @@ namespace WebAccounts {
                 break;
             default:
                 { /* do Nothing */ }
+                break;
             }
 
             iter++;
@@ -324,6 +325,11 @@ namespace WebAccounts {
         for (auto& e : toErase) {
             local.folders.erase(e);
         }
+    }
+
+    PurchaseResult WebClient::PurchaseProduct(const std::string& uuid)
+    {
+      return PurchaseResult();
     }
 
     const bool WebClient::IsOK() {

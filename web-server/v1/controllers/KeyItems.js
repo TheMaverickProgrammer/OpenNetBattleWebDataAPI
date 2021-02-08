@@ -2,6 +2,8 @@
 KeyItemsController uses routes use to KeyItems and GET resources from the Mongo DB
 */
 const moment = require('moment');
+const njwt = require('njwt');
+const mongoose = require('mongoose');
 const settings = require('../../server-settings');
 
 var KeyItemsModel = require('./models/KeyItemsModel');
@@ -76,29 +78,55 @@ KeyItemsController.GetOwnedKeyItemsList = function(req, res) {
     var promise = query.exec();
   
     promise.then(function(Items) {
-      res.json({data: Items});
+
+      let outItems = [];
+
+      Items.forEach(item => {
+        let out = {};
+        out.itemId = item._id;
+        out.name = item.name;
+        out.description = item.description;
+
+        outItems.push(out);
+      });
+
+      res.json({data: outItems});
     }).catch(function(err) {
       res.status(500).json({error: err});
     });
   }
 
-// GET API_IP/VERSION/keyitems/:id
-// Get a single key item
-// GetKeyItemByID
-KeyItemsController.GetKeyItemByID = function(req, res) {
-  itemId = req.params.id;
+// GET API_IP/VERSION/keyitems/inspect/:jwt
+// inspect anonymous user behind a jwt token for their key items
+// InspectUserKeyItems
+KeyItemsController.InspectUserKeyItems = async function(req, res) {
+  njwt.verify(req.params.jwt, settings.server.signingKey, function(err, token) {
+    if(err) {
+      return res.status(500).json({error: "Invalid token"});
+    } else {
+      let otherUserId = token.body.sub;
 
-  var query = KeyItemsModel.findOne({_id: itemId});
-  var promise = query.exec();
-
-  promise.then(function(Item) {
-    if(Item == null) {
-      throw "No Key Item with that ID";
+      var query = KeyItemsModel.find({owners: mongoose.Types.ObjectId(otherUserId)});
+      var promise = query.exec();
+    
+      promise.then(function(Items) {
+  
+        let outItems = [];
+  
+        Items.forEach(item => {
+          let out = {};
+          out.itemId = item._id;
+          out.name = item.name;
+          out.description = item.description;
+  
+          outItems.push(out);
+        });
+  
+        res.json({data: outItems});
+      }).catch(function(err) {
+        res.status(500).json({error: err});
+      });
     }
-
-    return res.json({data: Item});
-  }).catch(function(err) {
-    res.status(500).json({error: err});
   });
 }
 

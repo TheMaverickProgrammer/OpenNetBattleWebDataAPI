@@ -8,6 +8,8 @@ module.exports = function Router(database, settings) {
   var db = database;
 
   var router = require('express').Router();
+
+  var njwt = require('njwt');
   
   // Require the auth module
   var auth = require('./auth')(db);
@@ -57,6 +59,18 @@ module.exports = function Router(database, settings) {
       status: 'Logout successful!',
     });
   });
+
+  // Will return a jwt to be used in server exchanges
+  router.route('/mask')
+    .get(auth.isAuthenticated, function(req, res) {
+      let claims = {
+        sub: req.user.userId,
+        scope: 'query'
+      };
+
+      const jwt = njwt.create(claims, settings.server.signingKey);
+      res.status(200).json(jwt.compact());
+    });
 
   // Use this endpoint to create admins remotely
   router.route('/admin')
@@ -179,12 +193,14 @@ module.exports = function Router(database, settings) {
     .post(auth.isAuthenticated, keyItems.AddKeyItem);
 
   router.route('/keyitems/owned')
-    .get(auth.isAuthenticated, keyItems.GetOwnedKeyItemsList)
+    .get(auth.isAuthenticated, keyItems.GetOwnedKeyItemsList);
 
   router.route('/keyitems/:id')
-    .get(auth.isAuthenticated, keyItems.GetKeyItemByID)
     .put(auth.isAuthenticated, keyItems.UpdateKeyItem)
     .delete(auth.isAuthenticated, keyItems.DeleteKeyItem);
+
+  router.route('/keyitems/inspect/:jwt')
+    .get(auth.isAuthenticated, keyItems.InspectUserKeyItems);
 
   router.route('/keyitems/since/:time')
     .get(auth.isAdminAuthenticated, keyItems.GetKeyItemsAfterDate);
