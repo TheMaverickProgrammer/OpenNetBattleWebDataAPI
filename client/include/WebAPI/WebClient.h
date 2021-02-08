@@ -146,7 +146,11 @@ namespace WebAccounts {
         */
         EXPORT_DLL void PushAccount();
 
+        /*! \brief Will return purchase codes that reflect the status of the desired transaction */
         EXPORT_DLL PurchaseResult PurchaseProduct(const std::string& uuid);
+
+        /*! \brief Will generate a new mask value and store it into the account */
+        EXPORT_DLL void GenerateMask();
 
         /*! \brief Query if the connection is OK */
         EXPORT_DLL const bool IsOK();

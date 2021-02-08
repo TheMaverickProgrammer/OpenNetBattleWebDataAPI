@@ -31,8 +31,8 @@ namespace WebAccounts {
         ~WebClientPimpl();
 
     private:
-        httplib::Client* client; //!< HTTP client
-        WebClient* parent; //!< pointer to public-facing WebClient object
+        httplib::Client* client{ nullptr }; //!< HTTP client
+        WebClient* parent{ nullptr }; //!< pointer to public-facing WebClient object
 
         /*! \brief loads the byte buffer with image data of a card to be rendered by a graphics API
             \param card. A Card with a valid ID.
@@ -117,6 +117,13 @@ namespace WebAccounts {
         /*! \brief Given a URL path, will append the proper URI versioning the API uses*/
         const std::string MakeVersionURI(std::string path) const;
 
+        /* \brief Will try to login, collect the userId of the account, and return the status of the attempt
+           \param userId. The destination for the userId returned by the account login. If failed, do not use.
+
+           \return True if login was successful. False otherwise.
+        */
+        const bool Login(std::string& userId);
+
         /*! \brief Adds a local folder (new folder) to the remote folder
             \param from. A Folder object containing a list of cards to push to our account.
 
@@ -176,6 +183,27 @@ namespace WebAccounts {
         */
         void MergeFolderCache(AccountState::FolderCache& dest, AccountState::FolderCache& src);
 
+        /*! \brief Will reach the endpoint that returns codes on a transaction*/
+        PurchaseResult PurchaseProductImpl(const std::string& uuid);
+
+        /*! \brief Will update the card pool and monies on the user table as reflected by the server
+            \param destPool. The destination container to store the cards in the pool
+            \param destMonies. The destination unsigned 32bit location to store the monies value
+        */
+        void FetchCardPoolAndMonies(std::vector<std::string>& destPool, uint32_t& destMonies);
+
+        /*! \brief Will merge local pool data from remote pool data
+            \param dest. The destination container. Difference in pools will be added here.
+            \param src. The source container. We compare the folders and content with dest before merging.
+            
+            If the dest does not contain a card from src, that card is added*/
+        void MergeCardPool(std::vector<std::string>& dest, const std::vector<std::string>& src);
+
+        /*! \brief Will reach the endpoint that returns codes on a transaction
+            \param dest. The destination container to store the key items
+        */
+        void FetchKeyItems(std::vector<KeyItem>& dest);
+
         /*! \brief Will download public-api fields set by the web api's server-settings.json file
         */
         void FetchServerSettings(ServerSettings& settings);
@@ -218,11 +246,7 @@ namespace WebAccounts {
 
         client->set_basic_auth(user, pass);
 
-        auto res = client->Get(privImpl->MakeVersionURI("login").c_str());
-
-        isLoggedIn = (res && res->status == 200);
-
-        return isLoggedIn;
+        return privImpl->Login(local.userId);
     }
 
     void WebClient::LogoutAndReset() {
@@ -287,6 +311,13 @@ namespace WebAccounts {
 
         privImpl->DownloadCardCombos(combos, this->local.lastFetchTimestamp);
 
+        std::vector<std::string> cardPool;
+        uint32_t monies{};
+        privImpl->FetchCardPoolAndMonies(cardPool, monies);
+        privImpl->MergeCardPool(this->local.cardPool, cardPool);
+        privImpl->FetchKeyItems(this->local.keyItems);
+        this->local.monies = monies;
+
         // update our last fetch time
         using namespace std::chrono;
         this->local.lastFetchTimestamp = system_clock::now().time_since_epoch().count();
@@ -329,7 +360,20 @@ namespace WebAccounts {
 
     PurchaseResult WebClient::PurchaseProduct(const std::string& uuid)
     {
-      return PurchaseResult();
+      return privImpl->PurchaseProductImpl(uuid);
+    }
+
+    void WebClient::GenerateMask()
+    {
+      httplib::Client* client = privImpl->GetClient();
+
+      if (!client) return;
+
+      auto res = client->Get(privImpl->MakeVersionURI("/mask").c_str());
+
+      if (res && res->status == 200) {
+        local.mask = res->body;
+      }
     }
 
     const bool WebClient::IsOK() {
@@ -391,6 +435,53 @@ namespace WebAccounts {
         if (client) {
             delete client; client = nullptr;
         }
+    }
+
+    const bool WebClientPimpl::Login(std::string& userId)
+    {
+      try {
+        const std::string url = MakeVersionURI("login");
+        auto res = client->Get(url.c_str());
+
+        if (res) {
+          if (res->status == 200) {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+
+            Json::Value json;
+            std::string error;
+
+            bool parsingSuccessful = reader->parse(
+              res->body.c_str(),
+              res->body.c_str() + res->body.size(),
+              &json,
+              &error
+            );
+            delete reader;
+
+            if (parsingSuccessful && ParseErrors(json) == 0) {
+              Json::Value data = json["data"];
+              Json::Value user = data["user"];
+              userId = user["userId"].asString();
+              return true;
+            }
+            else {
+              parent->errors.push_back(error);
+            }
+          }
+          else {
+            ParseStatusError(url, res->status);
+          }
+        }
+        else {
+          parent->errors.push_back("GET response for FetchCard was nullptr");
+        }
+      }
+      catch (std::exception& e) {
+        parent->errors.push_back(e.what());
+      }
+
+      return false;
     }
 
     httplib::Client* WebClientPimpl::GetClient() const {
@@ -641,6 +732,150 @@ namespace WebAccounts {
       }
     }
 
+    PurchaseResult WebClientPimpl::PurchaseProductImpl(const std::string& uuid)
+    {
+      if (!client) return PurchaseResult::network_error;
+
+      httplib::Params params; // empty
+      auto res = client->Post(MakeVersionURI("/product/purchase/" + uuid).c_str(), params);
+
+      if (!res) {
+        return PurchaseResult::network_error;
+      }
+
+      if (res->status != 200) {
+        Json::CharReaderBuilder builder;
+        Json::CharReader* reader = builder.newCharReader();
+
+        Json::Value json;
+        std::string error;
+
+        bool parsingSuccessful = reader->parse(
+          res->body.c_str(),
+          res->body.c_str() + res->body.size(),
+          &json,
+          &error
+        );
+        delete reader;
+
+        // normally we want to check for errors in our parse result
+        // but in this endpoint we want to know about the errors
+        // because they return specific codes...
+        if (parsingSuccessful) {
+          Json::Value value = json["code"];
+          Json::UInt juint = value.asUInt();
+          return static_cast<PurchaseResult>(juint);
+        }
+
+        parent->errors.push_back(error);
+      }
+
+      return PurchaseResult::success;
+    }
+
+    void WebClientPimpl::FetchCardPoolAndMonies(std::vector<std::string>& destPool, uint32_t& destMonies)
+    {
+      try {
+        const std::string url = MakeVersionURI("users/"+parent->local.userId);
+        auto res = client->Get(url.c_str());
+
+        if (res) {
+          if (res->status == 200) {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+
+            Json::Value json;
+            std::string error;
+
+            bool parsingSuccessful = reader->parse(
+              res->body.c_str(),
+              res->body.c_str() + res->body.size(),
+              &json,
+              &error
+            );
+            delete reader;
+
+            if (parsingSuccessful && ParseErrors(json) == 0) {
+              Json::Value data = json["data"];
+
+              for (auto&& item : data["pool"]) {
+                destPool.push_back(item.asString());
+              }
+
+              Json::Value monies = data["monies"];
+              destMonies = static_cast<uint32_t>(monies.asUInt());
+            }
+            else {
+              parent->errors.push_back(error);
+            }
+          }
+          else {
+            ParseStatusError(url, res->status);
+          }
+        }
+        else {
+          parent->errors.push_back("GET response for GetUserByID was nullptr");
+        }
+      }
+      catch (std::exception& e) {
+        parent->errors.push_back(e.what());
+      }
+    }
+
+    void WebClientPimpl::MergeCardPool(std::vector<std::string>& dest, const std::vector<std::string>& src)
+    {
+      // TODO
+    }
+
+    void WebClientPimpl::FetchKeyItems(std::vector<KeyItem>& dest)
+    {
+      try {
+        const std::string url = MakeVersionURI(std::string("keyitems/owned"));
+        auto res = client->Get(url.c_str());
+
+        if (res) {
+          if (res->status == 200) {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+
+            Json::Value json;
+            std::string error;
+
+            bool parsingSuccessful = reader->parse(
+              res->body.c_str(),
+              res->body.c_str() + res->body.size(),
+              &json,
+              &error
+            );
+            delete reader;
+
+            if (parsingSuccessful && ParseErrors(json) == 0) {
+              Json::Value data = json["data"];
+              
+              for (auto&& item : data) {
+                Json::String name = item["name"].asString();
+                Json::String desc = item["description"].asString();
+
+                dest.emplace_back(KeyItem{ name, desc });
+              }
+            }
+            else {
+              parent->errors.push_back(error);
+            }
+          }
+          else {
+            ParseStatusError(url, res->status);
+          }
+        }
+        else {
+          parent->errors.push_back("GET response for GetOwnedKeyItemsList was nullptr");
+        }
+      }
+      catch (std::exception& e) {
+        parent->errors.push_back(e.what());
+      }
+    }
+
     void WebClientPimpl::FetchServerSettings(ServerSettings& settings)
     {
       try {
@@ -665,7 +900,8 @@ namespace WebAccounts {
 
             if (parsingSuccessful && ParseErrors(json) == 0) {
               Json::Value data = json["data"];
-              const char* comboIconURL = data.asString().c_str();
+              Json::String asString = data.asString();
+              const char* comboIconURL = asString.c_str();
               this->parent->downloadImageHandler(comboIconURL, settings.comboIconData, settings.comboIconDataLen);
             }
             else {

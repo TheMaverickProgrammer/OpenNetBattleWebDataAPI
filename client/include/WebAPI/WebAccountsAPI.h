@@ -55,6 +55,13 @@ namespace WebAccounts {
       std::vector<std::string> cards; //!< UUIDs of cards that trigger this combo IN-ORDER
     };
 
+    /*! \brief Represents key item data used in-game*/
+    struct KeyItem {
+      std::string id; //!< ID of the key item
+      std::string name; //!<  Name of the key item
+      std::string description; //!< Description of the key item
+    };
+
     /*! \brief A lightweight card structure used in battle. This will point to a card model that contains all the data*/
     struct Card {
         std::string modelId; //!< ID of the CardModel this structure will reference
@@ -117,6 +124,13 @@ namespace WebAccounts {
 
         using FolderCache = std::map<std::string, std::shared_ptr<Folder>>;
         FolderCache folders; //!< cache of the folder data
+
+        std::vector<std::string> cardPool; //!< cache of the card pool in the user's account
+        std::vector<KeyItem> keyItems; //!< cache of the key items fetched from the endpoint
+
+        uint32_t monies{}; //!< Monies on the account
+        std::string mask; //!< Mask identifier for swapping with servers who wish to inspect key items
+        std::string userId; //!< userID on the web api
 
         long long lastFetchTimestamp{ 0 }; //!< The last time a fetch was requested
     };

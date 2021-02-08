@@ -112,7 +112,7 @@ module.exports = function Router(database, settings) {
 	  }, users.GetUserByID)
     .put(auth.isAuthenticated, users.UpdateUser)
     .delete(auth.isAdminAuthenticated, users.DeleteUser);
-
+    
   router.route('/users/since/:time')
     .get(auth.isAdminAuthenticated, users.GetUsersAfterDate);
 
