@@ -7,13 +7,12 @@ const ProductTypes = {
   KeyItem: "KeyItem"
 };
 
-Object.freeze(ProductsTypes);
+Object.freeze(ProductTypes);
 
 var Products = Schema({
   userId: {type: Schema.Types.ObjectId, required: true}, // owner of the product
   itemId: {type: Schema.Types.ObjectId, required: true}, // key item, card, etc...
   monies: {type: Number, required: true},
-  servers: {type: Array, required: true}, // IP address of the known server(s) handing these items out
   type: {type: String, required: true},
   created: {type: Date, default: Date.now},
   updated: {type: Date, default: Date.now}
@@ -27,4 +26,4 @@ Products.pre('save', function(callback) {
 });
 
 // Export function to create Products model class
-module.exports = { ProductTypes: ProductTypes, model: mongoose.model('Products', Products) };
+module.exports = { ProductTypes: ProductTypes, ProductsModel: mongoose.model('Products', Products) };

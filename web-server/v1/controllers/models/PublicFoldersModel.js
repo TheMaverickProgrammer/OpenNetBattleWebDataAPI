@@ -3,7 +3,7 @@ mongoose.Promise = global.Promise;
 var Schema = mongoose.Schema;
 
 var PublicFolders = Schema({
-  author: {type: String, required: false, default: "Anon"},
+  author: {type: String, required: true},
   name: {type: String, required: true, unique: true},
   cards: {type: Array, default: []},
   created: {type: Date, default: Date.now},

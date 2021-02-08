@@ -33,8 +33,7 @@ ProductsController.AddProduct = async function(req, res) {
     userId: userId,
     itemId: req.body.itemId,
     monies: req.body.monies,
-    type: req.body.type,
-    servers = req.body.servers
+    type: req.body.type
   };
 
   if(Product.monies <= 0) {
@@ -101,7 +100,7 @@ ProductsController.GetProductByID = function(req, res) {
 // Update a Product entry
 // UpdateProduct
 ProductsController.UpdateProduct = function(req, res) {
-  var query = ProductsModel.find({userId: req.user.userId, itemId: req.params.id});
+  var query = ProductsModel.findOne({userId: req.user.userId, _id: req.params.id});
   var promise = query.exec();
 
   promise.then(async (Product) => {
@@ -110,7 +109,6 @@ ProductsController.UpdateProduct = function(req, res) {
     }
 
     Product.monies = req.body.monies || Product.monies;
-    Product.servers = req.body.servers || Product.servers;
 
     if(Product.monies <= 0) {
       throw "Product must be worth something";
@@ -129,7 +127,7 @@ ProductsController.UpdateProduct = function(req, res) {
 // DeleteProduct
 ProductsController.DeleteProduct = function(req, res) {
   // you can only delete a product if you own it
-  var query = ProductsModel.find({userId: req.user.userId, itemId: req.params.id});
+  var query = ProductsModel.findOne({userId: req.user.userId, itemId: req.params.id});
   
   query.exec().then(function(post) {
     if(post == null) {
@@ -175,32 +173,14 @@ ProductsController.PurchaseProduct = async function(req, res) {
     customerPool: []
   }
 
-  let ips = [];
-  if(req.ips.length) ips = req.ips;
-  else ips = [req.ip];
-
   try {
-    product = await ProductsModel.findById(productId);
-
-    //find a server ip in `ips` array that is also in the product list
-    var found = false;
-    for (var i = 0; i < ips.length; i++) {
-        if (product.servers.indexOf(ips[i]) > -1) {
-            found = true;
-            break;
-        }
-    }
-
-    if(found == false) {
-      throw 'Server not listed in the product permissions list';
-    }
-
+    product = await ProductsModel.findOne({_id: productId});
   }catch(e) {
     return res.status(500).json({error: "Product does not exist"});
   }
 
   try {
-    customer = await UsersModel.findById(customerId);
+    customer = await UsersModel.findOne({_id: customerId});
     Object.assign(revert.customerPool, customer.pool); // copy value
     Object.assign(revert.customerMonies, customer.monies); // copy value
   } catch(e) {
@@ -208,11 +188,15 @@ ProductsController.PurchaseProduct = async function(req, res) {
   }
 
   try {
-    productOwner = await UsersModel.findById(product.userId);
+    productOwner = await UsersModel.findOne({_id: product.userId});
     Object.assign(revert.productOwnerPool, productOwner.pool); // copy value
     Object.assign(revert.productOwnerMonies, productOwner.monies); // copy value
   } catch(e) {
     return res.status(500).json({error: "Cannot buy from a vendor that does not exist"});
+  }
+
+  if(productOwner._id.equals(customer._id)) {
+    return res.status(500).json({error: "You own this vendor"});
   }
 
   let monies = customer.monies || 0;
@@ -241,6 +225,7 @@ ProductsController.PurchaseProduct = async function(req, res) {
     from: customerId,
     to: productOwnerId,
     product: productId,
+    monies: product.monies,
     loaned: productWasLoaned
   };
 
@@ -252,7 +237,7 @@ ProductsController.PurchaseProduct = async function(req, res) {
 
   if(productWasLoaned == false) {
     if(product.type == ProductTypes.Card) {
-      let index = productOwner.pool.findIndex(product.productId);
+      let index = productOwner.pool.indexOf(product.itemId);
 
       if(index == -1) {
         // something went wrong with the state of the transaction
@@ -264,18 +249,20 @@ ProductsController.PurchaseProduct = async function(req, res) {
           Tx.loaned = true; // update the copy of the record we will return too
           productWasLoaned = true; // fix if a race condtion happened here
         } catch(e) {
+          console.log(e);
           return res.status(500).json({error: "Transaction became invalid during processing"});
         }
       } else {
         productOwner.pool.splice(index, 1); // remove from the owner's card pool
-        customer.pool.push(product.productId); // add to the customer's card pool
+        customer.pool.push(product.itemId); // add to the customer's card pool
       }
     } else if(product.type == ProductTypes.KeyItem) {
       try {
-        keyItem = await KeyItemsModel.findOne({ _id: product.productId });
+        keyItem = await KeyItemsModel.findOne({ _id: product.itemId });
         Object.assign(revert.keyItemOwners, keyItem.owners); // copy value
         keyItem.owners.push(customer._id); // add the owner
       }catch(e) {
+        console.log(e);
         return res.status(500).json({error: "KeyItem not found to purchase"});
       }
     }
@@ -283,14 +270,15 @@ ProductsController.PurchaseProduct = async function(req, res) {
     // just give the item directly 
     if(product.type == ProductTypes.Card) {
 
-      customer.pool.push(product.productId);
+      customer.pool.push(product.itemId);
 
     } else if(product.type == ProductTypes.KeyItem) {
       try{
-        keyItem = await KeyItemsModel.findOne({ _id: product.productId });
+        keyItem = await KeyItemsModel.findOne({ _id: product.itemId });
         Object.assign(revert.keyItemOwners, keyItem.owners); // copy value
         keyItem.owners.push(customer._id); // add the owner
       }catch(e) {
+        console.log(e);
         return res.status(500).json({error: "KeyItem not found to purchase"});
       }
     }
@@ -318,18 +306,24 @@ ProductsController.PurchaseProduct = async function(req, res) {
       productOwner.monies += product.monies * (settings.preferences.loanPercentage/100.0);
     }
 
+    productOwner.markModified('pool'); // mongoose doesn't notify changes on basic arrays
     await productOwner.save(); // update vendor records
 
     // charge customer full price
     customer.monies = Math.max(monies - product.monies, 0);
 
+    customer.markModified('pool');
     await customer.save(); // update customer records (monies and card pool...)
 
     fail.customer = false;
 
-    await keyItem.save(); // update keyItem record
+    if(keyItem) {
+      await keyItem.save(); // update keyItem record
+    }
 
-    fail.keyItem = false;
+    // we still set this to false even if we don't have a keyItem
+    // because this represents the "step where it fails" later if needed
+    fail.keyItem = false; 
 
     let tx = await model.save();
 
@@ -338,6 +332,8 @@ ProductsController.PurchaseProduct = async function(req, res) {
     // return the resulting transaction
     return res.status(200).json({data: tx});
   }catch(err) {
+    console.log(err);
+
     keyItem.owners = revert.keyItemOwners;
     customer.pool = revert.customerPool;
     customer.monies = revert.customerMonies;
@@ -349,18 +345,18 @@ ProductsController.PurchaseProduct = async function(req, res) {
       // undo keyItem
       // undo customer
       // undo productOwner
-      keyItem.save();
+      if(keyItem) { keyItem.save(); }
       customer.save();
       productOwner.save();
 
     }else if(fail.keyItem) {
       // undo customer
       // undo productOwner
-      customerOG.save();
-      productOwnerOG.save();
+      customer.save();
+      productOwner.save();
     }else if(fail.customer) {
       // undo productOwner
-      productOwnerOG.save();
+      productOwner.save();
     }
 
     return res.status(500).json({error: err});
