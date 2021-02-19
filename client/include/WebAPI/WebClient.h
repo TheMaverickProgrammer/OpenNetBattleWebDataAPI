@@ -6,7 +6,11 @@
 #   define EXPORT_DLL  __declspec( dllexport )
 #   define EXTERN_TEMPLATE extern
 # else
-#   define EXPORT_DLL  __declspec( dllimport )
+#   ifdef _MSC_VER
+#     define EXPORT_DLL  __declspec( dllimport )
+#   else
+#     define EXPORT_DLL
+#   endif
 #   define EXTERN_TEMPLATE extern
 # endif
 #else
