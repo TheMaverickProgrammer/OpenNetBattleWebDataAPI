@@ -56,6 +56,20 @@ KeyItemsController.AddKeyItem = async function(req, res) {
   });
 }
 
+// GET API_IP/VERSION/keyitems/:id
+// Get a key item
+// GetKeyItemByID
+KeyItemsController.GetKeyItemByID = function(req, res) {
+  var query = KeyItemsModel.findOne({_id: req.params.id});
+  var promise = query.exec();
+
+  promise.then(function(Item) {
+    res.json({data: Item});
+  }).catch(function(err) {
+    res.status(500).json({error: err});
+  });
+}
+
 // GET API_IP/VERSION/keyitems/
 // Get ALL key items created by the requesting user
 // GetKeyItemsList

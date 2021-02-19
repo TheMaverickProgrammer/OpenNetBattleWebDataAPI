@@ -92,6 +92,7 @@ namespace WebAccounts {
         std::string name; //!< Name of the folder
         std::string id; //!< unique ID of the folder in the database
         std::vector<std::string> cards; //!< List of card IDs
+        std::vector<std::string> errors; //!< Errors from web api
 
         Folder() = default;
 

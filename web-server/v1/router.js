@@ -196,6 +196,7 @@ module.exports = function Router(database, settings) {
     .get(auth.isAuthenticated, keyItems.GetOwnedKeyItemsList);
 
   router.route('/keyitems/:id')
+    .get(auth.isAuthenticated, keyItems.GetKeyItemByID)
     .put(auth.isAuthenticated, keyItems.UpdateKeyItem)
     .delete(auth.isAuthenticated, keyItems.DeleteKeyItem);
 
