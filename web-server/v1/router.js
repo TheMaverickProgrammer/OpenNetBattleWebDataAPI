@@ -47,7 +47,7 @@ module.exports = function Router(database, settings) {
   router.get('/login', auth.isAuthenticated, function(req, res){
     res.status(200).json({
         status: 'Login successful!',
-	    user: req.user
+	      user: req.user
     });
   });
   

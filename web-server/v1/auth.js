@@ -80,7 +80,8 @@ module.exports = function Auth(database) {
             var requestUser = {
               userId: user._id,
               isAdmin: true,
-              username: user.username
+              username: user.username,
+              monies: user.monies
             };
             
             done(null, requestUser);
@@ -94,7 +95,8 @@ module.exports = function Auth(database) {
         var requestUser = {
           userId: user._id,
           isAdmin: false,
-          username: user.username
+          username: user.username,
+          monies: user.monies
         };
         
         done(null, requestUser);

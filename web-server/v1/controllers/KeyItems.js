@@ -64,6 +64,10 @@ KeyItemsController.GetKeyItemByID = function(req, res) {
   var promise = query.exec();
 
   promise.then(function(Item) {
+    if(Item == null) {
+      return res.status(500).json({error: "Item not found with ID " + req.params.id});
+    }
+
     res.json({data: Item});
   }).catch(function(err) {
     res.status(500).json({error: err});
