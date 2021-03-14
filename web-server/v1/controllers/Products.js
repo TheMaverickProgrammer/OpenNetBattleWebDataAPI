@@ -127,7 +127,7 @@ ProductsController.UpdateProduct = function(req, res) {
 // DeleteProduct
 ProductsController.DeleteProduct = function(req, res) {
   // you can only delete a product if you own it
-  var query = ProductsModel.findOne({userId: req.user.userId, itemId: req.params.id});
+  var query = ProductsModel.findOne({userId: req.user.userId, _id: req.params.id});
   
   query.exec().then(function(post) {
     if(post == null) {

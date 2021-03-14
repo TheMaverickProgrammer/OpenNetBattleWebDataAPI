@@ -74,7 +74,7 @@ UsersController.GetUserByID = function(req, res) {
       twitter: user.twitter, 
       email: user.email, 
       monies: user.monies,
-      pool: user.pool,
+      pool: user.pool || [],
       userId: user._id 
     };
 	
@@ -89,7 +89,7 @@ UsersController.GetUserByID = function(req, res) {
 // UpdateUser
 UsersController.UpdateUser = function(req, res) {
   if(!(req.user.isAdmin || req.params.id == req.user.userId)) {
-	  res.status(401).json({error: "Not Authenticated"});;
+	  res.status(401).json({error: "Not Authenticated"});
   }
 
   UsersModel.findById(req.params.id).then(async (user) => {
@@ -109,7 +109,7 @@ UsersController.UpdateUser = function(req, res) {
         twitter: updatedModel.twitter, 
         email: updatedModel.email, 
         monies: updatedModel.monies,
-        pool: updatedModel.pool,
+        pool: updatedModel.pool || [],
         userId: updatedModel._id 
       };
       res.status(200).json({

@@ -81,7 +81,8 @@ module.exports = function Auth(database) {
               userId: user._id,
               isAdmin: true,
               username: user.username,
-              monies: user.monies
+              monies: user.monies,
+              pool: user.pool || []
             };
             
             done(null, requestUser);
@@ -96,7 +97,8 @@ module.exports = function Auth(database) {
           userId: user._id,
           isAdmin: false,
           username: user.username,
-          monies: user.monies
+          monies: user.monies,
+          pool: user.pool || []
         };
         
         done(null, requestUser);
@@ -118,21 +120,29 @@ module.exports = function Auth(database) {
  
           var isAdmin = isMatch.isAdmin || false;
 
-		  var username; 
+		      var username; 
           var userId;
+          var monies;
+          var pool;
 
           if(!isAdmin) {
             username = isMatch.user.username;
             userId = isMatch.user._id;
+            monies = isMatch.user.monies;
+            pool = isMatch.user.pool;
           } else {
             username = isMatch.adminUser.username;
             userId = isMatch.adminUser._id;
+            monies = isMatch.adminUser.monies;
+            pool = isMatch.adminUser.pool;
           }
 
           // Success
           var userInfo = {
             username: username,
-			userId: userId,
+			      userId: userId,
+            monies: monies,
+            pool: pool,
             isAdmin: isAdmin
           };
 
@@ -155,15 +165,19 @@ module.exports = function Auth(database) {
 
           // We must be admin otherwise something went seriously wrong
           // for this type of authentication
-		  if(!isAdmin) { return done(null, false); }
+		      if(!isAdmin) { return done(null, false); }
       
-		  var username = isMatch.adminUser.username;
+		      var username = isMatch.adminUser.username;
           var userId = isMatch.adminUser._id;
+          var pool = isMatch.adminUser.pool;
+          var monies = isMatch.adminUser.monies;
 
           // Success
           var userInfo = {
             username: username,
-			userId: userId,
+			      userId: userId,
+            pool: pool,
+            monies: monies,
             isAdmin: isAdmin
           };
 
