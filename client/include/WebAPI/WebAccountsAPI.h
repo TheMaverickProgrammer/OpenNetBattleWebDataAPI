@@ -24,21 +24,21 @@ namespace WebAccounts {
     /*! \brief Represents the Card's data used in the game over the network*/
     struct CardProperties {
         std::vector<char> codes; //!< Every code this card can have
-        int damage; //!< Base damage
-        bool timeFreeze; //!< is this card a Time Freeze trigger
+        int damage{}; //!< Base damage
+        bool timeFreeze{}; //!< is this card a Time Freeze trigger
         std::string element, secondaryElement; //!< Element this card can be
         std::string description, verboseDescription; //!< Description of the card
         std::string imageURL, iconURL; //!< Icons of the card
         std::string id; //!< ID of the card
         std::string name; //!< Name of the card
-        unsigned limit; //!< How many identical cards can be in the same deck
+        unsigned limit{}; //!< How many identical cards can be in the same deck
         std::string action; //!< The action this card invokes on the player
-        bool canBoost; //!< Whether or not this card can be modified by other cards
+        bool canBoost{}; //!< Whether or not this card can be modified by other cards
         std::vector<std::string> metaClasses; //!< Programmer-supplied class types
         ClassTypes classType; //!< The class type of this card
 
-        byte* imageData, *iconData; //!< Image buffer data to be used by a graphics API
-        size_t imageDataLen, iconDataLen; //!< Length of image buffer
+        byte* imageData{}, * iconData{}; //!< Image buffer data to be used by a graphics API
+        size_t imageDataLen{}, iconDataLen{}; //!< Length of image buffer
     };
 
     /*! \brief Represents data for combos used in-game */
@@ -48,9 +48,9 @@ namespace WebAccounts {
       std::string element; //!< Primary element
       std::string secondaryElement; //!< Secondary element
       std::string action; //!< The action this card invokes on the player
-      bool timeFreeze; //!< is this card a Time Freeze trigger
-      bool canBoost; //!< Whether or not this card can be modified by other cards
-      int damage; //!< Base damage
+      bool timeFreeze{}; //!< is this card a Time Freeze trigger
+      bool canBoost{}; //!< Whether or not this card can be modified by other cards
+      int damage{}; //!< Base damage
       std::vector<std::string> metaClasses; //!< Programmer-supplied class types
       std::vector<std::string> cards; //!< UUIDs of cards that trigger this combo IN-ORDER
     };
@@ -65,7 +65,7 @@ namespace WebAccounts {
     struct Card {
         std::string modelId; //!< ID of the CardModel this structure will reference
         std::string id; //!< unique ID of this card implementation
-        char code; //!< The unique code this card represents
+        char code{}; //!< The unique code this card represents
 
         Card() = default;
 

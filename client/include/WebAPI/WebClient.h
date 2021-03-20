@@ -2,7 +2,7 @@
 
 // Define EXPORTED for any platform
 #ifndef WEBAPI_STATIC
-# ifdef OPENNETBATTLEWEBCLIENT_EXPORTS
+# ifdef BN_WEBCLIENT_EXPORTS
 #   define EXPORT_DLL  __declspec( dllexport )
 #   define EXTERN_TEMPLATE extern
 # else

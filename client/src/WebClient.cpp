@@ -2,6 +2,8 @@
 
 #include <httplib.h>
 #include <json/json.h>
+#include <string>
+#include <vector>
 
 #ifdef __ANDROID__
 #define USE_STRCPY_S 1
@@ -462,9 +464,7 @@ namespace WebAccounts {
             delete reader;
 
             if (parsingSuccessful && ParseErrors(json) == 0) {
-              parent->errors.push_back(json.asString());
-              Json::Value data = json["data"];
-              Json::Value user = data["user"];
+              Json::Value user = json["user"];
               userId = user["userId"].asString();
               return true;
             }

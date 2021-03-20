@@ -5,6 +5,8 @@ execute_process(COMMAND git submodule update --init -- extern/tabulate
 
 option(BUILD_SHARED_LIBS "TRUE to build WebAPI-client as shared libraries, FALSE to build it as static libraries" ON)
 
+add_compile_definitions(BN_WEBCLIENT_EXPORTS)
+
 set(INCROOT ${CMAKE_CURRENT_SOURCE_DIR}/include/WebAPI)
 set(SRCROOT ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(EXTROOT ${CMAKE_CURRENT_SOURCE_DIR}/extern)
