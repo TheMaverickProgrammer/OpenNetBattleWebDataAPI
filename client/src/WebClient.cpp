@@ -259,11 +259,10 @@ namespace WebAccounts {
         auto res = client->Get(privImpl->MakeVersionURI("logout").c_str());
 
         if (res && res->status == 200) {
-            isLoggedIn = false;
+          isLoggedIn = false;
+          client->set_basic_auth("", "");
+          local = AccountState{};
         }
-
-        client->set_basic_auth("", "");
-        local = AccountState{};
     }
 
     void WebClient::AddCard(const Card& card, Folder& folder) {
@@ -429,7 +428,8 @@ namespace WebAccounts {
     //                                    PRIVATE IMPLEMENTATION                                            //
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    WebClientPimpl::WebClientPimpl(WebClient* parent, const char* domain, int port) : parent(parent) {
+    WebClientPimpl::WebClientPimpl(WebClient* parent, const char* domain, int port) : 
+      parent(parent) {
         client = new httplib::Client(domain, port);
     }
 

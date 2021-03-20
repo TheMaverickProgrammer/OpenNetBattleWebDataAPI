@@ -57,7 +57,6 @@ namespace WebAccounts {
 
     /*! \brief Represents key item data used in-game*/
     struct KeyItem {
-      std::string id; //!< ID of the key item
       std::string name; //!<  Name of the key item
       std::string description; //!< Description of the key item
     };
