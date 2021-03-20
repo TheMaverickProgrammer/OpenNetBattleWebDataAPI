@@ -462,6 +462,7 @@ namespace WebAccounts {
             delete reader;
 
             if (parsingSuccessful && ParseErrors(json) == 0) {
+              parent->errors.push_back(json.asString());
               Json::Value data = json["data"];
               Json::Value user = data["user"];
               userId = user["userId"].asString();
@@ -476,7 +477,7 @@ namespace WebAccounts {
           }
         }
         else {
-          parent->errors.push_back("GET response for FetchCard was nullptr");
+          parent->errors.push_back("GET response for Login was nullptr");
         }
       }
       catch (std::exception& e) {
