@@ -101,15 +101,7 @@ module.exports = function Router(database, settings) {
     }, users.AddUser);
 
   router.route('/users/:id')
-    .get(function(req, res, next) {
-      if(req.user && req.user.isAdmin) {
-        return next();
-      } else if(req.user && req.params.id == req.user.userId) {
-        return next();
-      }
-      
-      return res.status(401).end();
-	  }, users.GetUserByID)
+    .get(auth.isAuthenticated, users.GetUserByID)
     .put(auth.isAuthenticated, users.UpdateUser)
     .delete(auth.isAdminAuthenticated, users.DeleteUser);
     

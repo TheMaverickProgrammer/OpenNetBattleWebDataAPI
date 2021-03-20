@@ -155,13 +155,13 @@ module.exports = function Auth(database) {
           // for this type of authentication
 		  if(!isAdmin) { return done(null, false); }
       
-		  var username = isMatch.adminUser.username;
+		      var username = isMatch.adminUser.username;
           var userId = isMatch.adminUser._id;
 
           // Success
           var userInfo = {
             username: username,
-			userId: userId,
+			      userId: userId,
             isAdmin: isAdmin
           };
 
