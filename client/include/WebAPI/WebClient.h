@@ -1,17 +1,15 @@
 #pragma once
 
 // Define EXPORTED for any platform
-#ifndef WEBAPI_STATIC
-# ifdef OPENNETBATTLEWEBCLIENT_EXPORTS
-#   define EXPORT_DLL  __declspec( dllexport )
-#   define EXTERN_TEMPLATE extern
-# else
-#   ifdef _MSC_VER
-#     define EXPORT_DLL  __declspec( dllimport )
-#   else
-#     define EXPORT_DLL
-#   endif
-#   define EXTERN_TEMPLATE extern
+#ifdef __WIN32
+# ifndef WEBAPI_STATIC
+#  ifdef BN_WEBCLIENT_EXPORTS
+#    define EXPORT_DLL  __declspec( dllexport )
+#    define EXTERN_TEMPLATE extern
+#  else
+#    define EXPORT_DLL  __declspec( dllimport )
+#    define EXTERN_TEMPLATE extern
+#  endif
 # endif
 #else
 # define EXPORT_DLL
