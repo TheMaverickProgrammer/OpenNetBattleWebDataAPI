@@ -161,10 +161,9 @@ ProductsController.GetProductsAfterDate = function(req, res) {
 ProductsController.PurchaseProduct = async function(req, res) {
   const ERROR_CODES = {
     invalid_purchase: 1,
-    self_sell: 2,
-    key_item_owned: 3,
-    no_monies: 4,
-    network_error: 5
+    key_item_owned: 2,
+    no_monies: 3,
+    network_error: 4
   };
 
   Object.freeze(ERROR_CODES);
@@ -177,8 +176,6 @@ ProductsController.PurchaseProduct = async function(req, res) {
   // keep track of all changed properties incase a revert is needed
   var revert = {
     keyItemOwners: [],
-    productOwnerMonies: 0,
-    productOwnerPool: [],
     customerMonies: 0,
     customerPool: []
   }
@@ -199,14 +196,8 @@ ProductsController.PurchaseProduct = async function(req, res) {
 
   try {
     productOwner = await UsersModel.findOne({_id: product.userId});
-    Object.assign(revert.productOwnerPool, productOwner.pool); // copy value
-    Object.assign(revert.productOwnerMonies, productOwner.monies); // copy value
   } catch(e) {
     return res.status(500).json({error: "Cannot buy from a vendor that does not exist", code: ERROR_CODES.invalid_purchase});
-  }
-
-  if(productOwner._id.equals(customer._id)) {
-    return res.status(500).json({error: "You own this vendor", code: ERROR_CODES.self_sell});
   }
 
   let monies = customer.monies || 0;
@@ -217,26 +208,11 @@ ProductsController.PurchaseProduct = async function(req, res) {
 
   var productOwnerId = product.userId;
 
-  var productWasLoaned = null;
-
-  if(product.type == ProductTypes.Card) {
-    productWasLoaned = true; // assume it's loaned from within the system
-
-    // look for the card in the owner's pool
-    if(productOwner.pool.includes(product.itemId)) {
-      productWasLoaned = false;
-    }
-  } else if(product.type == ProductTypes.KeyItem) {
-    // INFINITE custom key items
-    productWasLoaned = false;
-  }
-
   var Tx = {
     from: customerId,
     to: productOwnerId,
     product: productId,
-    monies: product.monies,
-    loaned: productWasLoaned
+    monies: product.monies
   };
 
   // Prepare to execute the Tx query
@@ -244,53 +220,16 @@ ProductsController.PurchaseProduct = async function(req, res) {
 
   // If the product completes, add the monies
   // to the account of the product owner
-
-  if(productWasLoaned == false) {
-    if(product.type == ProductTypes.Card) {
-      let index = productOwner.pool.indexOf(product.itemId);
-
-      if(index == -1) {
-        // something went wrong with the state of the transaction
-
-        try {
-          let txFix = await TxModel.findOne({ _id: Tx._id });
-          txFix.loaned = true;
-          txFix.save();
-          Tx.loaned = true; // update the copy of the record we will return too
-          productWasLoaned = true; // fix if a race condtion happened here
-        } catch(e) {
-          console.log(e);
-          return res.status(500).json({error: "Transaction became invalid during processing", code: ERROR_CODES.network_error});
-        }
-      } else {
-        productOwner.pool.splice(index, 1); // remove from the owner's card pool
-        customer.pool.push(product.itemId); // add to the customer's card pool
-      }
-    } else if(product.type == ProductTypes.KeyItem) {
-      try {
-        keyItem = await KeyItemsModel.findOne({ _id: product.itemId });
-        Object.assign(revert.keyItemOwners, keyItem.owners); // copy value
-        keyItem.owners.push(customer._id); // add the owner
-      }catch(e) {
-        console.log(e);
-        return res.status(500).json({error: "KeyItem not found to purchase", code: ERROR_CODES.invalid_purchase});
-      }
-    }
-  } else {
-    // just give the item directly 
-    if(product.type == ProductTypes.Card) {
-
-      customer.pool.push(product.itemId);
-
-    } else if(product.type == ProductTypes.KeyItem) {
-      try{
-        keyItem = await KeyItemsModel.findOne({ _id: product.itemId });
-        Object.assign(revert.keyItemOwners, keyItem.owners); // copy value
-        keyItem.owners.push(customer._id); // add the owner
-      }catch(e) {
-        console.log(e);
-        return res.status(500).json({error: "KeyItem not found to purchase", code: ERROR_CODES.invalid_purchase});
-      }
+  if(product.type == ProductTypes.Card) {
+    customer.pool.push(product.itemId);
+  } else if(product.type == ProductTypes.KeyItem) {
+    try{
+      keyItem = await KeyItemsModel.findOne({ _id: product.itemId });
+      Object.assign(revert.keyItemOwners, keyItem.owners); // copy value
+      keyItem.owners.push(customer._id); // add the owner
+    }catch(e) {
+      console.log(e);
+      return res.status(500).json({error: "KeyItem not found to purchase", code: ERROR_CODES.invalid_purchase});
     }
   }
 
@@ -301,20 +240,13 @@ ProductsController.PurchaseProduct = async function(req, res) {
     tx: true
   };
 
-  try{
+  try {
     /**
     * The following code tries to process everything 
     * in one pass. If any errors occur at this stage they will
     * all be `catch`-ed by the promise error handler
     * and the transaction will be deleted
     */
-
-    // pay the owner
-    if(productWasLoaned == false) {
-      productOwner.monies += product.monies;
-    } else {
-      productOwner.monies += product.monies * (settings.preferences.loanPercentage/100.0);
-    }
 
     productOwner.markModified('pool'); // mongoose doesn't notify changes on basic arrays
     await productOwner.save(); // update vendor records
@@ -341,14 +273,12 @@ ProductsController.PurchaseProduct = async function(req, res) {
 
     // return the resulting transaction
     return res.status(200).json({data: tx});
-  }catch(err) {
+  } catch(err) {
     console.log(err);
 
     keyItem.owners = revert.keyItemOwners;
     customer.pool = revert.customerPool;
     customer.monies = revert.customerMonies;
-    productOwner.pool = revert.productOwnerPool;
-    productOwner.monies = revert.productOwnerMonies;
 
     // if any important transaction .save() fails, we have records to undo
     if(fail.tx) {

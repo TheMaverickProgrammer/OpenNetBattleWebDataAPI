@@ -1,0 +1,39 @@
+From: buddy@battlenetwork.io
+To: bmpeppers@gmail.com
+Subject: Password Reset
+Content-Type: multipart/alternative; boundary="mail"
+
+--mail
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+--mail
+
+--mail
+Content-Type: multipart/related; boundary="html"
+
+--html
+Content-Type: text/html; charset="us-ascii"
+Content-Transfer-Encoding: 8bit
+<!DOCTYPE html>
+<html>
+<div style="border:2px solid #006BBD; border-radius:3px; padding:10px; font-family: 'courier'; font-weight: bold; background-color: #F7FFF7; display: inline-block; width: 50%; height: auto;">
+<img src="cid:01" alt="(pic)" width="80" height="96">
+<div style="display: inline-block;">
+Hello %%NAME%%, I'm a program from Central Area.<br>
+Follow the link to go to the password reset form: <br><a href="%%URL%%" style="color: green; margin-right: 50%; text-decoration: none;">&gt;&gt;RESET NOW&lt;&lt;</a>
+<p>Your pal, <br>
+&nbsp;-&nbsp;Buddy</p>
+</div></div>
+</html>
+--html
+
+--html
+Content-Type: image/png; name="mug.png"
+Content-Disposition: inline; filename="mug.png"
+Content-Transfer-Encoding: base64
+Content-ID: <01>
+Content-Location: mug.png
+
+iVBORw0KGgoAAAANSUhEUgAAACgAAAAwCAMAAABUpcipAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAtUExURQAAAMBQdzCAfUjIx1DT4FjQ8Nj0+DBTwDBHoDA4iDw4WFBJODArKJKYiAAAABbbKMoAAAAPdFJOU///////////////////ANTcmKEAAAAJcEhZcwAAHsAAAB7AAREutrcAAAIqSURBVEhLrdXBgqMgEARQBERAzf9/7lZVNyIz2T1tHSYOvDSorQmfbSQiKWUlxeijnk/wA0M7U0rB35/UIFk2JliO46h1oYJkrpiywzFvSvgsOiKEHLU9EvCXq3R2MGWgS5ofSYByixRcC7YJcz1aMhlYcIG5cWUfmiVXmBrCLXpJVBwlA5xDKiGFNemOZiUHXBWj66P0CcFWtaRRCnbuf6bWdo7oEjjs/b21aUaawz5390UpXDvQGazX5RNr7vskpGvcY7scosv0abklv0G245R3uReItR3egqhj4ZcAM/YY/Sr+HWL5soeY0fsJa+NcJAVNIQOWcCZOsKRDm2NStD0C7ns4IyFLDjiCO0uJI+wxh5NS3dpXiLbPyQ4BEyCH0D06myn1eLi8zyQYOdTrOBsMWOtJ2vIpEp4cRGcI8hHiu0DN3lA3dZ7WJsgp3POuSlZKjxguLqHeAwbVk4SuEGtRwNhrY5vBsVBkF/X3Y0ZXGwq2CkdIp64EfF4FvjIrqG/tcfWC2qTVHAUx0fXI8E2BWf7rJUWzCuLZ78PpbbYNZ+fN+PeYN9wGhHztuGN8OIcbv6xJXPPIBRGO+wfiELGFeHeuy4femZAhwoX9T1CnoYuIoENT8gnLgHa2zx1E0+Mu+5zi0K/fvyB+i/DxFfJVy989g9gLDh06mzA+v4sBY/zdM+nMIVqDI6VkyOBHbTlpQZRCW9gxHoWPhiFB41umHPEWd7l//gAqkiu4Y5BGKAAAAABJRU5ErkJggg==
+--html
+--mail

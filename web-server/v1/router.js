@@ -8,9 +8,12 @@ module.exports = function Router(database, settings) {
   var db = database;
 
   var router = require('express').Router();
-
   var njwt = require('njwt');
-  
+  var nodemailer = require('nodemailer');
+
+  // get filesystem module
+  const fs = require("fs");
+
   // Require the auth module
   var auth = require('./auth')(db);
 
@@ -40,6 +43,9 @@ module.exports = function Router(database, settings) {
 
   // PRODUCTS RESOURCE
   var products = require('./controllers/Products');
+
+  // TXS RESOURCE
+  var txs = require('./controllers/Txs');
 
   /** RESOURCES */
 
@@ -71,6 +77,59 @@ module.exports = function Router(database, settings) {
       const jwt = njwt.create(claims, settings.server.signingKey);
       res.status(200).json(jwt.compact());
     });
+
+  // Will send a password reset link with the special token included
+  router.post('/reset-pass/:email', function(req, res){
+    let email = req.params.email;
+
+    // load the mail template
+    // TODO: cache
+    const mail_template = fs.readFileSync("./v1/mail_template.txt");
+
+    let body = mail_template.toString();
+
+    var UsersModel = require('./controllers/models/UsersModel');
+    var p = UsersModel.findOne({email: email}).exec();
+
+    p.then(user=> {
+      if(user != null) {
+        console.log("sending email to user " + user.email);
+
+        let token = ""; // use jwt somehow...
+        let reset_url = "/reset-pass/token/"+token;
+
+        body = body.replace("%%NAME%%", user.name);
+        body = body.replace("%%URL%%", reset_url);
+
+        let transporter = nodemailer.createTransport({
+          sendmail: true,
+          newline: 'unix',
+          path: '/usr/sbin/sendmail'
+        });
+      
+        transporter.sendMail({
+          from: 'buddy@battlenetwork.io',
+          to: email,
+          subject: 'Test',
+          text: body
+        }, (err, info) => {
+          if(err) {
+            console.log("nodemailer encountered an error!")
+            console.log(err);
+            res.status(500).json(err);
+          } else {
+            console.log("nodemailer is sending an email");
+            console.log(info.envelope);
+            console.log(info.messageId);
+            res.status(200).end();
+          }
+        });
+      } else {
+        res.status(200).end(); // false positive to not leak emails...
+        console.log("Could not find user for email " + email);
+      }
+    });
+  });
 
   // Use this endpoint to create admins remotely
   router.route('/admin')
@@ -221,6 +280,10 @@ module.exports = function Router(database, settings) {
 
   router.route('/products/since/:time')
     .get(auth.isAdminAuthenticated, products.GetProductsAfterDate);
+
+  // Use the txs module as an endpoint
+  router.route('/tx/since/:time')
+    .get(auth.isAuthenticated, txs.GetTxAfterDate);
 
   return router;
 };

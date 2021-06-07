@@ -54,16 +54,41 @@ const { token } = require('morgan');
 // Create the express application
 var app = express();
 
+// Use environment defined port or 3000
+var port = process.env.PORT || settings.server.port || 3000;
+
 // Configure app with CORS
-app.use(cors({
-  'allowedHeaders': ['sessionId', 'Origin', 'X-Requested-With', 'Content-Type', 'Authorization', 'Accept'],
-  'exposedHeaders': ['sessionId'],
-  'origin': '*',
-  'methods': 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-  'preflightContinue': false,
-  'credentials': true,
-  'origin': true
-}));
+/*app.use(cors({
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  preflightContinue: false,
+  credentials: true,
+  origin: true,
+  optionsSuccessStatus: 204
+}));*/
+
+// http OPTIONS verb hack
+app.use(function(req, res, next) {
+    console.log("req ip: " + req.headers.origin);
+
+    let fromOrigin = req.headers.origin.includes("http://localhost");
+
+    console.log("fromOrigin: " + fromOrigin)
+
+    const origin = fromOrigin ? req.headers.origin : 'http://battlenetwork.io'
+    res.setHeader('Access-Control-Allow-Origin', origin)
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE, OPTIONS')
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Length, X-JSON')
+    res.setHeader('Access-Control-Allow-Headers', 'Origin,X-Auth-Token,X-Requested-With,Content-Type,Authorization')
+    res.setHeader('Access-Control-Allow-Credentials', true)
+
+    // stop the request here
+  if(req.method == "OPTIONS") {
+    res.status(200).send();
+    return;
+  }
+
+  next();
+});
 
 function startServer(db, dbConnectString) {
   // Use the json parser in our application
@@ -116,8 +141,6 @@ function startServer(db, dbConnectString) {
   /******************************************
   CONFIG SERVER
   *******************************************/
-  // Use environment defined port or 3000
-  var port = process.env.PORT || settings.server.port || 3000;
 
   var cleanup = function() {
       db.close();

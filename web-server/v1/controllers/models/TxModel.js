@@ -8,7 +8,6 @@ var Tx = Schema({
   to: {type: Schema.Types.ObjectId, required: true},
   product: {type: Schema.Types.ObjectId, required: true},
   monies: {type: Number, required: true},
-  loaned: {type: Boolean, required: true},
   created: {type: Date, default: Date.now},
 });
 
