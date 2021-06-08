@@ -236,8 +236,8 @@ namespace WebAccounts {
     }
 
     WebClient::~WebClient() {
-        delete this->version;
-        delete this->domain;
+        delete[] this->version;
+        delete[] this->domain;
         delete privImpl;
     }
 
