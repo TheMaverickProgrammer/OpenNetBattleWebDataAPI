@@ -10,6 +10,12 @@ module.exports = function Router(database, settings) {
   var router = require('express').Router();
   var njwt = require('njwt');
   var nodemailer = require('nodemailer');
+  var crypto = require('crypto');
+  var bcrypt = require('bcryptjs');
+
+  // Use token model for creating tokens
+  const Token = require('./controllers/models/TokenModel');
+  const User = require('./controllers/models/UsersModel')
 
   // get filesystem module
   const fs = require("fs");
@@ -78,6 +84,69 @@ module.exports = function Router(database, settings) {
       res.status(200).json(jwt.compact());
     });
 
+  router.post('/reset-pass/verify', async function(req, res){
+    let userId = req.body.userId;
+    let token = req.body.token;
+    let password = req.body.password;
+
+    let passwordResetToken = await Token.findOne({ userId });
+
+    if (!passwordResetToken) {
+      console.log("No token exists for user")
+      res.status(500).json("Invalid request");
+    }
+
+    const isValid = await bcrypt.compare(token, passwordResetToken.token);
+
+    if(!isValid) {
+      console.log("Invalid or expired token")
+      res.status(500).json("Expired request");
+    }
+
+    let user = null;
+
+    try {
+      user = await User.findById({ _id: userId });
+      user.password = password;
+      await user.save();
+    } catch(e) {
+      console.log("Error trying to save user:" + e);
+      return res.status(500).end();
+    }
+
+    let transporter = nodemailer.createTransport({
+      sendmail: true,
+      newline: 'unix',
+      path: '/usr/sbin/sendmail'
+    });
+  
+    transporter.sendMail({
+      from: 'buddy@battlenetwork.io',
+      to: user.email,
+      subject: 'Password Confirmation',
+      text: user.username + ", your password was changed successfully"
+    }, (err, info) => {
+      if(err) {
+        console.log("nodemailer encountered an error!")
+        console.log(err);
+        res.status(500).json(err);
+      } else {
+        console.log("nodemailer is sending an email");
+        console.log(info.envelope);
+        console.log(info.messageId);
+        res.status(200).end();
+      }
+    });
+
+    try {
+      await passwordResetToken.deleteOne();
+    }catch(e) {
+      console.log("Error trying to delete token: " + e);
+    }
+
+    return res.status(200).end();
+  });
+
   // Will send a password reset link with the special token included
   router.post('/reset-pass/:email', function(req, res){
     let email = req.params.email;
@@ -91,12 +160,22 @@ module.exports = function Router(database, settings) {
     var UsersModel = require('./controllers/models/UsersModel');
     var p = UsersModel.findOne({email: email}).exec();
 
-    p.then(user=> {
+    p.then( async user=> {
       if(user != null) {
         console.log("sending email to user " + user.email);
 
-        let token = ""; // use jwt somehow...
-        let reset_url = "/reset-pass/token/"+token;
+        let resetToken = crypto.randomBytes(32).toString("hex");
+        const hash = await bcrypt.hash(resetToken, Number(settings.server.recovery.saltRounds));
+
+        await new Token({
+          userId: user._id,
+          token: hash
+        }).save();
+
+        let token_part = `?token=${resetToken}&id=${user._id}`;
+        let reset_url = settings.server.recovery.clientURL+"/reset-pass/"+token_part;
+
+        console.log("reset_url: " + reset_url);
 
         body = body.replace("%%NAME%%", user.name);
         body = body.replace("%%URL%%", reset_url);
@@ -110,7 +189,7 @@ module.exports = function Router(database, settings) {
         transporter.sendMail({
           from: 'buddy@battlenetwork.io',
           to: email,
-          subject: 'Test',
+          subject: 'Password Change Request',
           text: body
         }, (err, info) => {
           if(err) {

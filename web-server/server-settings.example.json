@@ -16,6 +16,12 @@
 			"enabled": false,
 			"user": "",
 			"password": ""
+		},
+		"recovery": {
+			"enabled": false,
+			"clientURL": "",
+			"secret": "",
+			"salt": 123
 		}
 	},
 	"preferences": {
