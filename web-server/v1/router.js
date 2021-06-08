@@ -190,7 +190,7 @@ module.exports = function Router(database, settings) {
           from: 'buddy@battlenetwork.io',
           to: email,
           subject: 'Password Change Request',
-          text: body
+          raw: body
         }, (err, info) => {
           if(err) {
             console.log("nodemailer encountered an error!")
