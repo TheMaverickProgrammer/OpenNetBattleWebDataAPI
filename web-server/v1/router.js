@@ -236,10 +236,16 @@ module.exports = function Router(database, settings) {
 
       let ip = "";
 
-      if(req.ips.length) ip = req.ips[0];
-      else ip = req.ip;
+      if(req.ips.length) {
+        ip = req.ips[0];
+      }
+      else {
+        ip = req.ip;
+      }
 
-      if(settings.server.signupWhiteList.findIndex( item => item === ip) > -1) {
+      let whitelist = settings.server.signupWhiteList.length ;
+
+      if(whitelist.length == 0 || whitelist.findIndex( item => item === ip) > -1) {
         next();
       } else {
         return res.status(401).end();

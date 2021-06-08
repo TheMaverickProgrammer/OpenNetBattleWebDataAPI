@@ -4,6 +4,7 @@ Users uses routes use to POST and GET resources from the Mongo DB
 const moment = require('moment');
 var UsersModel = require('./models/UsersModel');
 var UsersController = {};
+const settings = require('../../server-settings');
 
 var validateUserName = async function (name) {
   var result = false;
@@ -25,6 +26,8 @@ UsersController.AddUser = async function(req, res) {
     twitter: req.body.twitter || "",
     password: req.body.password,
     email: req.body.email || "",
+    monies: settings.preferences.startMonies || 0,
+    pool: settings.preferences.startPool || [],
     created: Date.now()
   };
 
