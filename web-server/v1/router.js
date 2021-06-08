@@ -243,7 +243,7 @@ module.exports = function Router(database, settings) {
         ip = req.ip;
       }
 
-      let whitelist = settings.server.signupWhiteList.length ;
+      let whitelist = settings.server.signupWhiteList;
 
       if(whitelist.length == 0 || whitelist.findIndex( item => item === ip) > -1) {
         next();
