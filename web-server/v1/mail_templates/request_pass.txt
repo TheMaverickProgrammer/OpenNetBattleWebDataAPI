@@ -1,5 +1,5 @@
 From: buddy@battlenetwork.io
-To: bmpeppers@gmail.com
+To: %%TO%%
 Subject: Password Reset
 Content-Type: multipart/alternative; boundary="mail"
 

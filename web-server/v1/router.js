@@ -91,6 +91,10 @@ module.exports = function Router(database, settings) {
 
     let passwordResetToken = await Token.findOne({ userId });
 
+    const mail_template = fs.readFileSync("./v1/mail_templates/pass_changed.txt");
+
+    let body = mail_template.toString();
+
     if (!passwordResetToken) {
       console.log("No token exists for user")
       res.status(500).json("Invalid request");
@@ -114,6 +118,9 @@ module.exports = function Router(database, settings) {
       return res.status(500).end();
     }
 
+    body = body.replace("%%NAME%%", user.username);
+    body = body.replace("%%TO%%", user.email);
+
     let transporter = nodemailer.createTransport({
       sendmail: true,
       newline: 'unix',
@@ -124,7 +131,7 @@ module.exports = function Router(database, settings) {
       from: 'buddy@battlenetwork.io',
       to: user.email,
       subject: 'Password Confirmation',
-      text: user.username + ", your password was changed successfully"
+      raw: body
     }, (err, info) => {
       if(err) {
         console.log("nodemailer encountered an error!")
@@ -153,7 +160,7 @@ module.exports = function Router(database, settings) {
 
     // load the mail template
     // TODO: cache
-    const mail_template = fs.readFileSync("./v1/mail_template.txt");
+    const mail_template = fs.readFileSync("./v1/mail_templates/request_pass.txt");
 
     let body = mail_template.toString();
 
@@ -177,8 +184,9 @@ module.exports = function Router(database, settings) {
 
         console.log("reset_url: " + reset_url);
 
-        body = body.replace("%%NAME%%", user.name);
+        body = body.replace("%%NAME%%", user.username);
         body = body.replace("%%URL%%", reset_url);
+        body = body.replace("%%TO%%", user.email);
 
         let transporter = nodemailer.createTransport({
           sendmail: true,

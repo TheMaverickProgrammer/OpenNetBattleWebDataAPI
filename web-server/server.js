@@ -68,11 +68,11 @@ var port = process.env.PORT || settings.server.port || 3000;
 
 // http OPTIONS verb hack
 app.use(function(req, res, next) {
-    console.log("req ip: " + req.headers.origin);
+    //console.log("req ip: " + req.headers.origin);
 
     let fromOrigin = req.headers.origin.includes("http://localhost");
 
-    console.log("fromOrigin: " + fromOrigin)
+    // console.log("fromOrigin: " + fromOrigin)
 
     const origin = fromOrigin ? req.headers.origin : 'http://battlenetwork.io'
     res.setHeader('Access-Control-Allow-Origin', origin)
