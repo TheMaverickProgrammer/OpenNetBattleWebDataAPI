@@ -70,11 +70,18 @@ var port = process.env.PORT || settings.server.port || 3000;
 app.use(function(req, res, next) {
     //console.log("req ip: " + req.headers.origin);
 
-    let fromOrigin = req.headers.origin.includes("http://localhost");
+    let fromOrigin = false;
+    let header_origin = req.headers.origin;
+
+    if(header_origin) {
+      fromOrigin = header_origin.includes("http://localhost");
+    } else {
+      header_origin = '*';
+    }
 
     // console.log("fromOrigin: " + fromOrigin)
 
-    const origin = fromOrigin ? req.headers.origin : 'http://battlenetwork.io'
+    const origin = fromOrigin ? header_origin : 'http://battlenetwork.io'
     res.setHeader('Access-Control-Allow-Origin', origin)
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE, OPTIONS')
     res.setHeader('Access-Control-Expose-Headers', 'Content-Length, X-JSON')
