@@ -317,10 +317,11 @@ namespace WebAccounts {
 
         std::vector<std::string> cardPool;
         uint32_t monies{};
-        privImpl->FetchCardPoolAndMonies(cardPool, monies);
+        this->local.cardPool.clear();
+        this->local.keyItems.clear();
+        privImpl->FetchCardPoolAndMonies(cardPool, this->local.monies);
         privImpl->MergeCardPool(this->local.cardPool, cardPool);
         privImpl->FetchKeyItems(this->local.keyItems);
-        this->local.monies = monies;
 
         // update our last fetch time
         using namespace std::chrono;
@@ -834,7 +835,7 @@ namespace WebAccounts {
     void WebClientPimpl::FetchKeyItems(std::vector<KeyItem>& dest)
     {
       try {
-        const std::string url = MakeVersionURI(std::string("keyitems/owned"));
+        const std::string url = MakeVersionURI("keyitems/owned");
         auto res = client->Get(url.c_str());
 
         if (res) {
