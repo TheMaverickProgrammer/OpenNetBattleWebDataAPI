@@ -231,6 +231,8 @@ module.exports = function Router(database, settings) {
   router.route('/users')
     .get(auth.isAdminAuthenticated, users.GetUsersList)
     .post(function(req, res, next) {
+      console.log("here for some reason");
+      
       if(req.user && !req.user.isAdmin) 
         return res.status(500).json({error: "Sign out before creating a new acount"});
 
@@ -254,6 +256,9 @@ module.exports = function Router(database, settings) {
 
   router.route('/users/:id')
     .get(function(req, res, next) {
+      
+      console.log(req.user);
+      
       if(req.user && req.user.isAdmin) {
         return next();
       } else if(req.user && req.params.id == req.user.userId) {
@@ -283,7 +288,7 @@ module.exports = function Router(database, settings) {
     .get(auth.isAuthenticated, cards.GetCardsByModelID);
 
   // Use the card properties module as an endpoint
-  router.route('/card-properties/')
+  router.route('/card-properties')
     .post(auth.isAdminAuthenticated, cardProperties.AddCardProperties);
 
   router.route('/card-properties/:id')

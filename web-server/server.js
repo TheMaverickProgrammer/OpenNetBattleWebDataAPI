@@ -79,7 +79,9 @@ app.use(function(req, res, next) {
       header_origin = '*';
     }
 
-    // console.log("fromOrigin: " + fromOrigin)
+    if(req._parsedUrl.pathname.indexOf('users') > -1) {
+      console.log(req)
+    }
 
     const origin = fromOrigin ? header_origin : 'http://battlenetwork.io'
     res.setHeader('Access-Control-Allow-Origin', origin)
