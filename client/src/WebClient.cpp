@@ -780,7 +780,7 @@ namespace WebAccounts {
     void WebClientPimpl::FetchCardPoolAndMonies(std::vector<std::string>& destPool, uint32_t& destMonies)
     {
       try {
-        const std::string url = MakeVersionURI("users/"+parent->local.userId);
+        const std::string url = MakeVersionURI(std::string("users/")+parent->local.userId));
         auto res = client->Get(url.c_str());
 
         if (res) {
