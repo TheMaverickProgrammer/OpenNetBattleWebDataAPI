@@ -250,7 +250,8 @@ namespace WebAccounts {
 
         client->set_basic_auth(user, pass);
 
-        return privImpl->Login(local.userId);
+        isLoggedIn = privImpl->Login(local.userId);
+        return isLoggedIn;
     }
 
     void WebClient::LogoutAndReset() {
