@@ -858,10 +858,11 @@ namespace WebAccounts {
               Json::Value data = json["data"];
               
               for (auto&& item : data) {
+                Json::String id   = item["itemId"].asString();
                 Json::String name = item["name"].asString();
                 Json::String desc = item["description"].asString();
 
-                dest.emplace_back(KeyItem{ name, desc });
+                dest.emplace_back(KeyItem{ id, name, desc });
               }
             }
             else {
