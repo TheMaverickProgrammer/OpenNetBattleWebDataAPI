@@ -1,18 +1,18 @@
 #pragma once
 
-// Define EXPORTED for any platform
-#define EXPORT_DLL
-
+// Define EXPORT for any platform
 #ifdef WIN32
 # ifndef WEBAPI_STATIC
 #  ifdef WEBAPI_CLIENT_EXPORTS
 #    define EXPORT_DLL  __declspec( dllexport )
-#    define EXTERN_TEMPLATE extern
 #  else
 #    define EXPORT_DLL  __declspec( dllimport )
-#    define EXTERN_TEMPLATE extern
 #  endif
 # endif
+#endif
+
+#ifndef EXPORT_DLL
+#define EXPORT_DLL
 #endif
 
 #include "WebAccountsAPI.h"
@@ -38,10 +38,9 @@ namespace WebAccounts {
     enum class PurchaseResult : uint8_t {
       success = 0x00,
       invalid_purchase = 0x01,
-      self_sell = 0x02,
-      key_item_owned = 0x03,
-      no_monies = 0x04,
-      network_error = 0x05
+      key_item_owned = 0x02,
+      no_monies = 0x03,
+      network_error = 0x04
     };
 
     /*! \brief WebClient objects are a wrapper around HTTP requests for the Open Battle Web API 
