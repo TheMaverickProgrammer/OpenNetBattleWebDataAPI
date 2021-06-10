@@ -1,6 +1,8 @@
 #pragma once
 
 // Define EXPORTED for any platform
+#define EXPORT_DLL
+
 #ifdef __WIN32
 # ifndef WEBAPI_STATIC
 #  ifdef BN_WEBCLIENT_EXPORTS
@@ -11,8 +13,6 @@
 #    define EXTERN_TEMPLATE extern
 #  endif
 # endif
-#else
-# define EXPORT_DLL
 #endif
 
 #include "WebAccountsAPI.h"
