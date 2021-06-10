@@ -3,7 +3,7 @@
 // Define EXPORTED for any platform
 #define EXPORT_DLL
 
-#ifdef __WIN32
+#ifdef WIN32
 # ifndef WEBAPI_STATIC
 #  ifdef WEBAPI_CLIENT_EXPORTS
 #    define EXPORT_DLL  __declspec( dllexport )
