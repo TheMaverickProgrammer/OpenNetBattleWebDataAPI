@@ -5,7 +5,7 @@
 
 #ifdef __WIN32
 # ifndef WEBAPI_STATIC
-#  ifdef BN_WEBCLIENT_EXPORTS
+#  ifdef WEBAPI_CLIENT_EXPORTS
 #    define EXPORT_DLL  __declspec( dllexport )
 #    define EXTERN_TEMPLATE extern
 #  else
