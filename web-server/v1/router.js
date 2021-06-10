@@ -230,43 +230,10 @@ module.exports = function Router(database, settings) {
   // Use the users module as an endpoint
   router.route('/users')
     .get(auth.isAdminAuthenticated, users.GetUsersList)
-    .post(function(req, res, next) {
-      console.log("here for some reason");
-      
-      if(req.user && !req.user.isAdmin) 
-        return res.status(500).json({error: "Sign out before creating a new acount"});
-
-      let ip = "";
-
-      if(req.ips.length) {
-        ip = req.ips[0];
-      }
-      else {
-        ip = req.ip;
-      }
-
-      let whitelist = settings.server.signupWhiteList;
-
-      if(whitelist.length == 0 || whitelist.findIndex( item => item === ip) > -1) {
-        next();
-      } else {
-        return res.status(401).end();
-      }
-    }, users.AddUser);
+    .post(auth.isAdminAuthenticated, users.AddUser);
 
   router.route('/users/:id')
-    .get(function(req, res, next) {
-      
-      console.log(req.user);
-      
-      if(req.user && req.user.isAdmin) {
-        return next();
-      } else if(req.user && req.params.id == req.user.userId) {
-        return next();
-      }
-      
-      return res.status(401).end();
-	  }, users.GetUserByID)
+    .get(auth.isAuthenticated, users.GetUserByID)
     .put(auth.isAuthenticated, users.UpdateUser)
     .delete(auth.isAdminAuthenticated, users.DeleteUser);
     
