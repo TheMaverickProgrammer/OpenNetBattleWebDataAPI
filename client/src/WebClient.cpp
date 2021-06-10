@@ -465,8 +465,7 @@ namespace WebAccounts {
             delete reader;
 
             if (parsingSuccessful && ParseErrors(json) == 0) {
-              Json::Value data = json["status"];
-              Json::Value user = data["user"];
+              Json::Value user = json["user"];
               userId = user["userId"].asString();
               return true;
             }
