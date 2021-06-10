@@ -3,6 +3,8 @@ project(WebAPI-client)
 execute_process(COMMAND git submodule update --init -- extern/tabulate
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
+DEFINE_SYMBOL(WEBAPI_CLIENT)
+
 option(BUILD_SHARED_LIBS "TRUE to build WebAPI-client as shared libraries, FALSE to build it as static libraries" ON)
 
 set(INCROOT ${CMAKE_CURRENT_SOURCE_DIR}/include/WebAPI)
